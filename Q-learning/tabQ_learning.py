@@ -57,7 +57,7 @@ def speedy_Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.po
 	s_k = defaultdict(lambda: defaultdict(list))
 	np.all(count>0)
 	k=0
-	alpha = 1
+	alpha = 1/(k+1)
 	observations = utility.RandomStateObservation(env)
 	def TkQ_sa(Qk, s_k_sa, r_k_sa_sum, count_sa):
 		return 1/count_sa * (r_k_sa_sum + gamma*np.sum([Qk[s,:].max() for s in s_k_sa]))
@@ -75,15 +75,12 @@ def speedy_Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.po
 		if np.all(count>0):
 			k=k+1
 			count = np.zeros([env.nS, env.nA])
-			r_k = np.zeros((env.nS, env.nA))
+			r_k_sum = np.zeros((env.nS, env.nA))
 			s_k = defaultdict(lambda: defaultdict(list))
 			alpha = 1/(k+1)
-			print(np.abs(Q_old-Q).max())
-			print(np.abs(Q_new-Q).max())
 			Q_old = Q
 			Q = Q_new
 			Q_new = np.zeros((env.nS, env.nA))
-			print(k, "upgraded")
 
 	return Q
 
