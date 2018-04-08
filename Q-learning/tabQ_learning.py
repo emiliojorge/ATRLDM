@@ -5,6 +5,9 @@ from lake_envs import *
 import value_iteration
 import utility
 from collections import defaultdict
+from scipy.special import gamma as gamma_fun
+from scipy.special import digamma as digamma
+import scipy.stats.t  as t_dist
 
 
 @utility.timing # Will print the time it takes to run this function.
@@ -92,10 +95,49 @@ def bayesian_Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.
 
 	For documentation on arguments see Qlearning function above
 	"""
-	Q = np.zeros((env.nS, env.nA))
+	mu0 = np.zeros((env.nS, env.nA))
+	lam = np.zeros((env.nS, env.nA))
+	alpha = np.zeros((env.nS, env.nA))
+	beta = np.zeros((env.nS, env.nA))
+	observations = utility.RandomStateObservation(env)
+
+
+	def cdf(x, mu, alpha, beta, lam):
+		#Pr(mu<x)
+
+		#scale location ????
+		return t_dist.cdf((x-mu)*(lam*alpha/beta)^0.5, 2*alpha)
+
+
+
+	def VPI(state):
+		a_star = np.argmax(mu0[state,:])
+		mu_star = mu0[state,a_star]
+		mu_second = sorted(mu0[state,:])[-2]
+		c = alpha[state,:]*gamma_fun(alpha[state,:]+1/2)*np.sqrt(beta[state])/(
+		(alpha[state,:]-1/2)*gamma_fun(alpha[state,:])*gamma_fun(1/2)*
+		alpha[state,:]*np.sqrt(2*lam[state,:]))*np.pow(
+		(1+mu0[state,:]^2)/(2*alpha[state,:]), -alpha[state,:]+1/2)
+
+		vpi = []
+		for action, a, mu, b, l, c_i in enumerate(alpha[state,:], mu0[state,:], beta[state,:], lam[stade,:], c ):
+			if action == a_star:
+				vpi.append(c_i + (mu_second-mu_star)*cdf(mu_second, mu, a, b, l))
+			else:
+				vpi.append(c_i + (mu-mu_star)*(1-cdf(mu_star, mu, a, b, l)))
+		return vpi
+
+    observation = self.env.reset()
+	for i in range(num_observations):
+		action = np.argmax(VPI(state)+mu0[state,:])
+        observation, reward, done,  info = self.env.step(action)
+
+		if done:
+			observation = self.env.reset()
+
 
 	#scipy.special.digamma(z)
-	return Q
+	return mu0
 
 @utility.timing # Will print the time it takes to run this function.
 def zap_QZerolearning(env, num_observations, gamma=0.95, learning_rate=utility.polynomial_learning_rate):
