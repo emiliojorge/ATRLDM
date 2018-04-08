@@ -85,6 +85,18 @@ def speedy_Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.po
 	return Q
 
 
+
+@utility.timing # Will print the time it takes to run this function.
+def bayesian_Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.polynomial_learning_rate):
+	""" Implements the Bayesian Qlearning.
+
+	For documentation on arguments see Qlearning function above
+	"""
+	Q = np.zeros((env.nS, env.nA))
+
+	#scipy.special.digamma(z)
+	return Q
+
 @utility.timing # Will print the time it takes to run this function.
 def zap_QZerolearning(env, num_observations, gamma=0.95, learning_rate=utility.polynomial_learning_rate):
 	""" Implements the tabular version (that is \theta should be Q) of Zap Q(0) learning.
