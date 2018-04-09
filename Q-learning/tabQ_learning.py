@@ -90,16 +90,17 @@ def speedy_Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.po
 
 
 @utility.timing # Will print the time it takes to run this function.
-def bayesian_Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.polynomial_learning_rate):
+def bayesian_Qlearning(env, num_observations, gamma=0.95,
+		mu_init=1, lam_init=1, alpha_init=1.05, beta_init=1):
 	""" Implements the Bayesian Qlearning.
 
 	For documentation on arguments see Qlearning function above
 	"""
 	n = np.zeros((env.nS, env.nA))
-	mu0 = np.ones((env.nS, env.nA))*2
-	lam = np.ones((env.nS, env.nA))*2
-	alpha = np.ones((env.nS, env.nA))*2
-	beta = np.ones((env.nS, env.nA))*2
+	mu0 = np.ones((env.nS, env.nA))*mu_init
+	lam = np.ones((env.nS, env.nA))*lam_init
+	alpha = np.ones((env.nS, env.nA))*alpha_init
+	beta = np.ones((env.nS, env.nA))*beta_init
 
 	def cdf(x, mu, alpha, beta, lam):
 		#Pr(mu<x)
@@ -113,6 +114,15 @@ def bayesian_Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.
 		a_star = np.argmax(mu0[state,:])
 		mu_star = mu0[state,a_star]
 		mu_second = sorted(mu0[state,:])[-2]
+		c1 = alpha[state,:]*gamma_fun(alpha[state,:]+1/2)*np.sqrt(beta[state])
+		c2 =  (
+		(alpha[state,:]-1/2)*gamma_fun(alpha[state,:])*gamma_fun(1/2)*
+		alpha[state,:]*np.sqrt(2*lam[state,:]))
+		c3 = np.power(
+		(1+mu0[state,:]**2)/(2*alpha[state,:]), -alpha[state,:]+1/2)
+
+
+		print(n[state],c3, "c3")
 		c = alpha[state,:]*gamma_fun(alpha[state,:]+1/2)*np.sqrt(beta[state])/(
 		(alpha[state,:]-1/2)*gamma_fun(alpha[state,:])*gamma_fun(1/2)*
 		alpha[state,:]*np.sqrt(2*lam[state,:]))*np.power(
@@ -124,11 +134,11 @@ def bayesian_Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.
 				vpi.append(c_i + (mu_second-mu_star)*cdf(mu_second, mu, a, b, l))
 			else:
 				vpi.append(c_i + (mu-mu_star)*(1-cdf(mu_star, mu, a, b, l)))
+		print("vpi",vpi)
 		return vpi
 
 	def update_posterior(state, action, M1, M2):
 		n[state,action] += 1
-
 		mu0[state, action] = (lam[state,action]*mu0[state,action]+
 					n[state,action]*M1)/(lam[state,action]+n[state,action])
 		lam[state,action] += n[state,action]
@@ -139,11 +149,11 @@ def bayesian_Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.
 
 
 	def moments(r, next_state):
-		next_action = np.argmax(mu0[next_state,:])
 		if next_state == "done":
 			E_r = 0
 			E_r_sq = 0
 		else:
+			next_action = np.argmax(mu0[next_state,:])
 			E_r = mu0[next_state,next_action]
 			E_r_sq = (lam[next_state, next_action]+1)/lam[next_state,next_action]*(
 			beta[next_state,next_action]/(alpha[next_state,next_action]-1)) + mu0[next_state,next_action]**2
@@ -155,7 +165,9 @@ def bayesian_Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.
 
 	observation = env.reset()
 	for i in range(num_observations):
-		action = np.argmax(VPI(observation)+mu0[observation,:])
+		#print("mu", mu0[observation,:])
+		#action = np.argmax(VPI(observation)+mu0[observation,:])
+		action = np.random.choice(env.nA, p=mu0[observation,:]/np.sum(mu0[observation,:]))
 		next_observation, reward, done,  info = env.step(action)
 
 		if done:
