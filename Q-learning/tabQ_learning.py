@@ -8,7 +8,8 @@ from collections import defaultdict
 from scipy.special import gamma as gamma_fun
 from scipy.special import digamma as digamma
 import scipy.stats  as stats
-
+from scipy.integrate import tplquad as tplquad
+from scipy.optimize import newton as newton
 
 @utility.timing # Will print the time it takes to run this function.
 def Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.polynomial_learning_rate):
@@ -91,7 +92,8 @@ def speedy_Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.po
 
 @utility.timing # Will print the time it takes to run this function.
 def bayesian_Qlearning(env, num_observations, gamma=0.95,
-		mu_init=1, lam_init=1, alpha_init=1.05, beta_init=1):
+		mu_init=1, lam_init=1, alpha_init=1.05, beta_init=1,
+		action_selection="vpi", update_method="mixed"):
 	""" Implements the Bayesian Qlearning.
 
 	For documentation on arguments see Qlearning function above
@@ -121,32 +123,78 @@ def bayesian_Qlearning(env, num_observations, gamma=0.95,
 		c3 = np.power(
 		(1+mu0[state,:]**2)/(2*alpha[state,:]), -alpha[state,:]+1/2)
 
-
-		print(n[state],c3, "c3")
+		#print(n[state],c1, "c1")
+		#print(n[state],c2, "c2")
+		#print(n[state],c3, "c3")
 		c = alpha[state,:]*gamma_fun(alpha[state,:]+1/2)*np.sqrt(beta[state])/(
 		(alpha[state,:]-1/2)*gamma_fun(alpha[state,:])*gamma_fun(1/2)*
 		alpha[state,:]*np.sqrt(2*lam[state,:]))*np.power(
 		(1+mu0[state,:]**2)/(2*alpha[state,:]), -alpha[state,:]+1/2)
-
+		#print("c", c)
 		vpi = []
 		for action, (a, mu, b, l, c_i) in enumerate(zip(alpha[state,:], mu0[state,:], beta[state,:], lam[state,:], c )):
 			if action == a_star:
 				vpi.append(c_i + (mu_second-mu_star)*cdf(mu_second, mu, a, b, l))
 			else:
+				#print(mu-mu_star,1-cdf(mu_star, mu, a, b, l))
+				#print(a,mu,b,l,c_i)
 				vpi.append(c_i + (mu-mu_star)*(1-cdf(mu_star, mu, a, b, l)))
 		print("vpi",vpi)
 		return vpi
 
-	def update_posterior(state, action, M1, M2):
+	def posterior(state, action, M1, M2, update=True):
 		n[state,action] += 1
-		mu0[state, action] = (lam[state,action]*mu0[state,action]+
+		mu0_new = (lam[state,action]*mu0[state,action]+
 					n[state,action]*M1)/(lam[state,action]+n[state,action])
-		lam[state,action] += n[state,action]
-		alpha[state,action] += n[state,action]/2
-		beta[state,action] +=n[state,action]/2*(M2-M1**2) + (
+		lam_new = lam[state,action] + n[state,action]
+		alpha_new = alpha[state,action] + n[state,action]/2
+		beta_new = beta[state,action] + n[state,action]/2*(M2-M1**2) + (
 		n[state,action]*lam[state,action]*(M1-mu0[state,action])**2/(2*(lam[state,action] + n[state,action]))
 		)
+		if update==True:
+			mu0[state,action] = mu0_new
+			lam[state,action] = lam_new
+			alpha[state,action] = alpha_new
+			beta[state,action] = beta_new
+		return mu0_new, lam_new, alpha_new, beta_new
 
+	def normal_gamma_pdf(x, tau, mu, l, a, b):
+		#mu, lambda, alpha, beta
+		p = b**a*np.sqrt(l)/(gamma_fun(a)*np.sqrt(2*np.pi))*tau**(a-1/2)*(
+		np.exp(-b*tau)*np.exp(-(l*tau*(x-mu)**2)/2))
+		return p
+
+
+	def update_mixed(state, action, reward, next_state):
+		def integrand(x, mu, tau):
+			#M1, M2 = moments(reward, next_state)
+			next_action = np.argmax(mu0[next_state,:])
+			E_r = mu0[next_state,next_action]
+			E_r_sq = (lam[next_state, next_action]+1)/lam[next_state,next_action]*(
+			beta[next_state,next_action]/(alpha[next_state,next_action]-1)) + mu0[next_state,next_action]**2
+			p_R = lambda x: stats.norm.pdf(x, E_r,np.sqrt(E_r_sq-E_r**2) )
+			return p_R(x)*prob(mu,tau,state,action, x, next_action, next_state)
+
+		def prob(mu,tau, state,action,x, next_action, next_state):
+			M1 =  reward + gamma*x
+			M2 = reward**2 + 2*gamma*reward*x+gamma**2*x**2
+			mu0_new, lam_new, alpha_new, beta_new = posterior(state,action,M1,M2, update=False)
+			return normal_gamma_pdf(mu,tau,mu0_new,lam_new, alpha_new, beta_new)
+
+		E_tau,_ = tplquad(lambda x,mu,tau: tau*integrand(x,mu,tau),0,1,lambda x: 0., lambda x: 1.,lambda x,y: 0.,lambda x,y: 1., epsabs=0.01, epsrel=0.1)
+		E_tau_mu,_ = tplquad(lambda x,mu,tau: mu*tau*integrand(x,mu,tau),0,1,lambda x: 0., lambda x: 1.,lambda x,y: 0.,lambda x,y: 1.,epsabs=0.01, epsrel=0.1)
+		E_tau_mu_sq,_ = tplquad(lambda x,mu,tau: mu**2*tau*integrand(x,mu,tau),0,1,lambda x: 0., lambda x: 1.,lambda x,y: 0.,lambda x,y: 1.,epsabs=0.01, epsrel=0.1)
+		E_log_tau,_ = tplquad(lambda x,mu,tau: np.log(tau)*integrand(x,mu,tau),0,1,lambda x: 0., lambda x: 1.,lambda x,y: 0.,lambda x,y: 1.,epsabs=0.01, epsrel=0.1)
+
+		new_alpha = np.max(1+0.001, newton(lambda y: log(y)-digamma(y)-(np.log(E_tau)-E_log_tau), 1.5))
+		new_mu0 = E_tau_mu/E_tau
+		new_lam = 1/(E_tau_mu_sq-E_tau*new_mu0**2)
+		new_beta = new_alpha/E_tau
+
+		alpha[state,action]=new_alpha
+		mu0[state,action] = new_mu0
+		lam[state,action] = new_lam
+		beta[state,action] = new_beta
 
 	def moments(r, next_state):
 		if next_state == "done":
@@ -165,20 +213,35 @@ def bayesian_Qlearning(env, num_observations, gamma=0.95,
 
 	observation = env.reset()
 	for i in range(num_observations):
-		#print("mu", mu0[observation,:])
-		#action = np.argmax(VPI(observation)+mu0[observation,:])
-		action = np.random.choice(env.nA, p=mu0[observation,:]/np.sum(mu0[observation,:]))
+		if action_selection == "vpi":
+			action = np.argmax(VPI(observation)+mu0[observation,:])
+		elif action_selection == "q-sampling":
+			action = np.random.choice(env.nA, p=mu0[observation,:]/np.sum(mu0[observation,:]))
+		else:
+			raise ValueError("Incorrect method for selecting actions")
+
 		next_observation, reward, done,  info = env.step(action)
 
 		if done:
 			next_observation = "done"
-		M1,M2 = moments(reward, next_observation)
-		update_posterior(observation, action, M1, M2)
+
+		if update_method == "mom":
+			M1,M2 = moments(reward, next_observation)
+			_, _,_,_ = posterior(observation, action, M1, M2, update=True)
+
+		elif update_method == "mixed":
+			update_mixed(observation, action, reward, next_observation)
+
+		else:
+			raise ValueError("Incorrect method for update")
 
 		if done:
 			observation = env.reset()
 		else:
 			observation = next_observation
+
+		#print("max", alpha.max(), beta.max(), lam.max(), mu0.max())
+		#print("min",alpha.min(), beta.min(), lam.min(), mu0.min())
 
 	#scipy.special.digamma(z)
 	return mu0
