@@ -7,7 +7,7 @@ import utility
 from collections import defaultdict
 from scipy.special import gamma as gamma_fun
 from scipy.special import digamma as digamma
-import scipy.stats.t  as t_dist
+import scipy.stats  as stats
 
 
 @utility.timing # Will print the time it takes to run this function.
@@ -95,18 +95,17 @@ def bayesian_Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.
 
 	For documentation on arguments see Qlearning function above
 	"""
-	mu0 = np.zeros((env.nS, env.nA))
-	lam = np.zeros((env.nS, env.nA))
-	alpha = np.zeros((env.nS, env.nA))
-	beta = np.zeros((env.nS, env.nA))
-	observations = utility.RandomStateObservation(env)
-
+	n = np.zeros((env.nS, env.nA))
+	mu0 = np.ones((env.nS, env.nA))*2
+	lam = np.ones((env.nS, env.nA))*2
+	alpha = np.ones((env.nS, env.nA))*2
+	beta = np.ones((env.nS, env.nA))*2
 
 	def cdf(x, mu, alpha, beta, lam):
 		#Pr(mu<x)
 
 		#scale location ????
-		return t_dist.cdf((x-mu)*(lam*alpha/beta)^0.5, 2*alpha)
+		return stats.t.cdf((x-mu)*(lam*alpha/beta)**0.5, 2*alpha)
 
 
 
@@ -116,25 +115,58 @@ def bayesian_Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.
 		mu_second = sorted(mu0[state,:])[-2]
 		c = alpha[state,:]*gamma_fun(alpha[state,:]+1/2)*np.sqrt(beta[state])/(
 		(alpha[state,:]-1/2)*gamma_fun(alpha[state,:])*gamma_fun(1/2)*
-		alpha[state,:]*np.sqrt(2*lam[state,:]))*np.pow(
-		(1+mu0[state,:]^2)/(2*alpha[state,:]), -alpha[state,:]+1/2)
+		alpha[state,:]*np.sqrt(2*lam[state,:]))*np.power(
+		(1+mu0[state,:]**2)/(2*alpha[state,:]), -alpha[state,:]+1/2)
 
 		vpi = []
-		for action, a, mu, b, l, c_i in enumerate(alpha[state,:], mu0[state,:], beta[state,:], lam[stade,:], c ):
+		for action, (a, mu, b, l, c_i) in enumerate(zip(alpha[state,:], mu0[state,:], beta[state,:], lam[state,:], c )):
 			if action == a_star:
 				vpi.append(c_i + (mu_second-mu_star)*cdf(mu_second, mu, a, b, l))
 			else:
 				vpi.append(c_i + (mu-mu_star)*(1-cdf(mu_star, mu, a, b, l)))
 		return vpi
 
-    observation = self.env.reset()
+	def update_posterior(state, action, M1, M2):
+		n[state,action] += 1
+
+		mu0[state, action] = (lam[state,action]*mu0[state,action]+
+					n[state,action]*M1)/(lam[state,action]+n[state,action])
+		lam[state,action] += n[state,action]
+		alpha[state,action] += n[state,action]/2
+		beta[state,action] +=n[state,action]/2*(M2-M1**2) + (
+		n[state,action]*lam[state,action]*(M1-mu0[state,action])**2/(2*(lam[state,action] + n[state,action]))
+		)
+
+
+	def moments(r, next_state):
+		next_action = np.argmax(mu0[next_state,:])
+		if next_state == "done":
+			E_r = 0
+			E_r_sq = 0
+		else:
+			E_r = mu0[next_state,next_action]
+			E_r_sq = (lam[next_state, next_action]+1)/lam[next_state,next_action]*(
+			beta[next_state,next_action]/(alpha[next_state,next_action]-1)) + mu0[next_state,next_action]**2
+
+		M1 = r + gamma * E_r
+		M2 = r**2 + 2*gamma*r*E_r + gamma**2*E_r_sq
+		return M1, M2
+
+
+	observation = env.reset()
 	for i in range(num_observations):
-		action = np.argmax(VPI(state)+mu0[state,:])
-        observation, reward, done,  info = self.env.step(action)
+		action = np.argmax(VPI(observation)+mu0[observation,:])
+		next_observation, reward, done,  info = env.step(action)
 
 		if done:
-			observation = self.env.reset()
+			next_observation = "done"
+		M1,M2 = moments(reward, next_observation)
+		update_posterior(observation, action, M1, M2)
 
+		if done:
+			observation = env.reset()
+		else:
+			observation = next_observation
 
 	#scipy.special.digamma(z)
 	return mu0
