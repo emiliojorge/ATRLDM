@@ -9,7 +9,7 @@ from scipy.special import gamma as gamma_fun
 from scipy.special import digamma as digamma
 import scipy.stats  as stats
 from scipy.integrate import tplquad as tplquad
-from scipy.optimize import newton as newton
+from scipy.optimize import brentq as brentq
 
 @utility.timing # Will print the time it takes to run this function.
 def Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.polynomial_learning_rate):
@@ -181,12 +181,30 @@ def bayesian_Qlearning(env, num_observations, gamma=0.95,
 			mu0_new, lam_new, alpha_new, beta_new = posterior(state,action,M1,M2, update=False)
 			return normal_gamma_pdf(mu,tau,mu0_new,lam_new, alpha_new, beta_new)
 
-		E_tau,_ = tplquad(lambda x,mu,tau: tau*integrand(x,mu,tau),0,1,lambda x: 0., lambda x: 1.,lambda x,y: 0.,lambda x,y: 1., epsabs=0.01, epsrel=0.1)
-		E_tau_mu,_ = tplquad(lambda x,mu,tau: mu*tau*integrand(x,mu,tau),0,1,lambda x: 0., lambda x: 1.,lambda x,y: 0.,lambda x,y: 1.,epsabs=0.01, epsrel=0.1)
-		E_tau_mu_sq,_ = tplquad(lambda x,mu,tau: mu**2*tau*integrand(x,mu,tau),0,1,lambda x: 0., lambda x: 1.,lambda x,y: 0.,lambda x,y: 1.,epsabs=0.01, epsrel=0.1)
-		E_log_tau,_ = tplquad(lambda x,mu,tau: np.log(tau)*integrand(x,mu,tau),0,1,lambda x: 0., lambda x: 1.,lambda x,y: 0.,lambda x,y: 1.,epsabs=0.01, epsrel=0.1)
+		def monte_carlo(fun, limits, repeats=10000):
+			s=0
+			vals=[0,0,0]
+			for i in range(repeats):
+				for j in range(3):
+					vals[j]=np.random.random()*(limits[j][1]-limits[j][0]) + limits[j][0]
+				s+=fun(vals[0], vals[1], vals[2])
+				print(vals)
+				print(fun(vals[0], vals[1], vals[2]))
+			return s/repeats
 
-		new_alpha = np.max(1+0.001, newton(lambda y: log(y)-digamma(y)-(np.log(E_tau)-E_log_tau), 1.5))
+		#E_tau,_ = tplquad(lambda x,mu,tau: tau*integrand(x,mu,tau),0,25,lambda x: 0., lambda x: 1.,lambda x,y: 0.,lambda x,y: 1000., epsabs=0.01, epsrel=0.1)
+		#E_tau_mu,_ = tplquad(lambda x,mu,tau: mu*tau*integrand(x,mu,tau),0,25,lambda x: 0., lambda x: 1.,lambda x,y: 0.,lambda x,y: 1000.,epsabs=0.01, epsrel=0.1)
+		#E_tau_mu_sq,_ = tplquad(lambda x,mu,tau: np.power(mu,2)*tau*integrand(x,mu,tau),0,25,lambda x: 0., lambda x: 1.,lambda x,y: 0.,lambda x,y: 1000.,epsabs=0.01, epsrel=0.1)
+		#E_log_tau,_ = tplquad(lambda x,mu,tau: np.log(tau)*integrand(x,mu,tau),0,25,lambda x: 0., lambda x: 1.,lambda x,y: 0.,lambda x,y: 1000.,epsabs=0.01, epsrel=0.1)
+
+		limits = [[0,25], [0.,1000],[0,1000]]
+		E_tau = monte_carlo(lambda x,mu,tau: tau*integrand(x,mu,tau),limits)
+		E_tau_mu = monte_carlo(lambda x,mu,tau: mu*tau*integrand(x,mu,tau),limits)
+		E_tau_mu_sq = monte_carlo(lambda x,mu,tau: np.power(mu,2)*tau*integrand(x,mu,tau),limits)
+		E_log_tau = monte_carlo(lambda x,mu,tau: np.log(tau)*integrand(x,mu,tau),limits)
+
+		print(E_tau, E_tau_mu, E_tau_mu_sq, E_log_tau)
+		new_alpha = np.max(1+0.001, brentq(lambda y: np.log(y)-digamma(y)-(np.log(E_tau)-E_log_tau),0.0001, 10**8))
 		new_mu0 = E_tau_mu/E_tau
 		new_lam = 1/(E_tau_mu_sq-E_tau*new_mu0**2)
 		new_beta = new_alpha/E_tau
