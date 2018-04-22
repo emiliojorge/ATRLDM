@@ -7,6 +7,7 @@ import numpy as np
 import simulation
 import base_algorithm
 from q_agent import QAgent
+from dynaq_agent import DynaQAgent
 
 register(
     id='Deterministic-4x4-FrozenLake-v0',
@@ -43,10 +44,11 @@ def main():
                  'NChain-v0']
     envs = [ gym.make(name) for name in env_names ]
 
-    algorithm = base_algorithm.BaseAlgorithm()
-    ##algorithm = QAgent(eps_start=0.95, eps_end=0.05, eps_num=10000, learning_rate=lambda n: 1/n**0.5)
+    #algorithm = base_algorithm.BaseAlgorithm()
+    #algorithm = QAgent(eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
+    algorithm = DynaQAgent(planning_steps=50, eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
 
-    horizon = 10000
+    horizon = 5000
     num_trials = 10
 
     print(f'Running {len(env_names)} environments for {horizon} timesteps over {num_trials} trials...')
