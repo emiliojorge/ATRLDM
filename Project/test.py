@@ -46,14 +46,13 @@ def main():
     num_trials = 10
 
     print(f'Running {len(env_names)} environments for {horizon} timesteps over {num_trials} trials...')
-    score = simulation.simulate_multiple_environment(envs, algorithm, T=horizon, num_trials=num_trials, discount=1)
-    #print('Your score is', score)
+    scores = simulation.simulate_multiple_environment(envs, algorithm, T=horizon, num_trials=num_trials, discount=1)
+    print('Your score is', scores)
 
-    mean_scores = np.mean(score, axis=1)
+    mean_scores = np.mean(scores, axis=1)
     for i, score in enumerate(mean_scores):
         print(f'Environment: "{env_names[i]}"')
-        print(f'-- Mean score: {score}')
-
+        print(f'-- Mean reward: {score}')
 
 if __name__ == '__main__':
     main()
