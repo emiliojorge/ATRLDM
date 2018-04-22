@@ -6,6 +6,7 @@ import numpy as np
 
 import simulation
 import base_algorithm
+from q_agent import QAgent
 
 register(
     id='Deterministic-4x4-FrozenLake-v0',
@@ -33,21 +34,23 @@ register(
 
 
 def main():
-    env_names = ['Deterministic-8x8-FrozenLake-v0',
-                  'Stochastic-8x8-FrozenLake-v0',
-                  'Blackjack-v0',
-                  'Roulette-v0',
-                  'NChain-v0']
+    env_names = ['Deterministic-4x4-FrozenLake-v0',
+                 'Deterministic-8x8-FrozenLake-v0',
+                 'Stochastic-8x8-FrozenLake-v0',
+                 'Blackjack-v0',
+                 'Roulette-v0',
+                 'NChain-v0']
     envs = [ gym.make(name) for name in env_names ]
 
-    algorithm = base_algorithm.BaseAlgorithm()
+    #algorithm = base_algorithm.BaseAlgorithm()
+    algorithm = QAgent(eps=0.1, learning_rate=lambda n: 1/n**0.5)
 
     horizon = 1000
     num_trials = 10
 
     print(f'Running {len(env_names)} environments for {horizon} timesteps over {num_trials} trials...')
     scores = simulation.simulate_multiple_environment(envs, algorithm, T=horizon, num_trials=num_trials, discount=1)
-    print('Your score is', scores)
+    #print('Your score is', scores)
 
     mean_scores = np.mean(scores, axis=1)
     for i, score in enumerate(mean_scores):
