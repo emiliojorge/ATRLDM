@@ -5,8 +5,10 @@ from gym import spaces
 class QAgent(object):
     """An agent using Q-learning and an epsilon-greedy policy."""
 
-    def __init__(self, eps, learning_rate):
-        self.eps = eps
+    def __init__(self, eps_start=1.0, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n**0.5):
+        self.eps_start = eps_start
+        self.eps_end = eps_end
+        self.eps_num = eps_num
         self.learning_rate = learning_rate
 
     def reset(self):
@@ -27,8 +29,20 @@ class QAgent(object):
         self.num_states = num_states
         self.num_action = num_action
 
+        self.eps = lambda n: self.eps_start - (self.eps_start-self.eps_end)/self.eps_num * n
+
         self.Q = np.zeros((num_states, num_action))
         self.nu = np.zeros((num_states, num_action)) # state-action pair visit counts
+
+    def get_exploration(self):
+        """Get linearly decaying for epsilon-greedy policy."""
+        num_episodes = np.sum(self.nu)
+
+        if num_episodes >= self.eps_num:
+            return self.eps_end
+        else:
+            return self.eps_start - (self.eps_start-self.eps_end)/self.eps_num * num_episodes
+
 
     def get_step(self, state, action):
         """
@@ -55,7 +69,10 @@ class QAgent(object):
         Returns:
             The action to play
         """
-        if np.random.random() < self.eps:
+        if state is None:
+            return 0
+
+        if np.random.random() < self.get_exploration():
             return np.random.randint(0, self.num_action)
         else:
             return np.argmax(self.Q[state,:])

@@ -34,6 +34,7 @@ register(
 
 
 def main():
+
     env_names = ['Deterministic-4x4-FrozenLake-v0',
                  'Deterministic-8x8-FrozenLake-v0',
                  'Stochastic-8x8-FrozenLake-v0',
@@ -42,10 +43,10 @@ def main():
                  'NChain-v0']
     envs = [ gym.make(name) for name in env_names ]
 
-    #algorithm = base_algorithm.BaseAlgorithm()
-    algorithm = QAgent(eps=0.1, learning_rate=lambda n: 1/n**0.5)
+    algorithm = base_algorithm.BaseAlgorithm()
+    ##algorithm = QAgent(eps_start=0.95, eps_end=0.05, eps_num=10000, learning_rate=lambda n: 1/n**0.5)
 
-    horizon = 1000
+    horizon = 10000
     num_trials = 10
 
     print(f'Running {len(env_names)} environments for {horizon} timesteps over {num_trials} trials...')
