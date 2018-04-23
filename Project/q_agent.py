@@ -5,7 +5,8 @@ from gym import spaces
 class QAgent(object):
     """An agent using Q-learning and an epsilon-greedy policy."""
 
-    def __init__(self, eps_start=1.0, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n**0.5):
+    def __init__(self, double=False, eps_start=1.0, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n**0.5):
+        self.double = double # Enables double Q-learning
         self.eps_start = eps_start
         self.eps_end = eps_end
         self.eps_num = eps_num
@@ -31,7 +32,12 @@ class QAgent(object):
 
         self.eps = lambda n: self.eps_start - (self.eps_start-self.eps_end)/self.eps_num * n
 
-        self.Q = np.zeros((num_states, num_action))
+        if self.double:
+            self.Q1 = np.zeros((num_states, num_action))
+            self.Q2 = np.zeros((num_states, num_action))
+        else:
+            self.Q = np.zeros((num_states, num_action))
+
         self.nu = np.zeros((num_states, num_action)) # state-action pair visit counts
 
     def get_exploration(self):
@@ -58,7 +64,17 @@ class QAgent(object):
 
         """
         self.nu[state,action] += 1
-        self.Q[state,action] += self.get_step(state, action) * (reward + self.discount * np.max(self.Q[next_state,:]) - self.Q[state,action])
+
+        if self.double:
+            # Flip a coin to decide which Q to update
+            if np.random.random() < 0.5:
+                max_a = np.argmax(self.Q1[next_state,:])
+                self.Q1[state,action] += self.get_step(state, action) * (reward + self.discount * self.Q2[next_state,max_a] - self.Q1[state,action])
+            else:
+                max_a = np.argmax(self.Q2[next_state,:])
+                self.Q2[state,action] += self.get_step(state, action) * (reward + self.discount * self.Q1[next_state,max_a] - self.Q2[state,action])
+        else:
+            self.Q[state,action] += self.get_step(state, action) * (reward + self.discount * np.max(self.Q[next_state,:]) - self.Q[state,action])
 
     def play(self, state):
         """
@@ -75,4 +91,8 @@ class QAgent(object):
         if np.random.random() < self.get_exploration():
             return np.random.randint(0, self.num_action)
         else:
-            return np.argmax(self.Q[state,:])
+            if self.double:
+                a = np.argmax(self.Q1[state,:] + self.Q2[state,:])
+            else:
+                a = np.argmax(self.Q[state,:])
+            return a
