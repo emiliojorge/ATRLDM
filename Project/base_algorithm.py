@@ -1,6 +1,7 @@
 import json
-from random import choice
+import math
 
+import numpy as np
 from dynaq_agent import DynaQAgent
 from gym import spaces
 from q_agent import QAgent
@@ -14,6 +15,7 @@ class BaseAlgorithm(object):
         self.action_space = None
 
         self.agents = []
+        self.greediness = None
 
         self._set_up()
 
@@ -28,6 +30,8 @@ class BaseAlgorithm(object):
         for a in config['start_agents']:
             agent = AGENT_TYPES[a]()
             self.agents.append(agent)
+
+        self.greediness = config['greediness']
 
     def reset(self):
         """
@@ -60,6 +64,25 @@ class BaseAlgorithm(object):
         for a in self.agents:
             a.observe_transition(state, action, next_state, reward)
 
+    def _majority_vote(self, agents_actions):
+        """
+        Implements the majority voting algorithm as presented in
+        "Ensemble Algorithms in Reinforcement Learning" (M.A.Wiering and H. von Hasselt, 2008)
+        :param agents_actions: List of actions that the agents picked
+        :return: action
+        """
+
+        actions = [a for a in range(self.action_space.n)]
+
+        policy = np.zeros(len(actions))
+        for action in actions:
+            preference_value = agents_actions.count(action)
+            policy[action] = math.exp(preference_value / (1 / self.greediness))
+
+        policy /= np.sum(policy, 0)
+
+        return np.random.choice(actions, p=policy)
+
     def play(self, state):
         """
         Returns the action to play at state
@@ -75,4 +98,4 @@ class BaseAlgorithm(object):
             action = agent.play(state)
             actions.append(action)
 
-        return choice(actions)
+        return self._majority_vote(actions)

@@ -2,5 +2,6 @@
   "start_agents": [
     "q",
     "dynaq"
-  ]
+  ],
+  "greediness": 1.5
 }
