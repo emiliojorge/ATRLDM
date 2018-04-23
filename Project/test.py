@@ -1,13 +1,8 @@
-import gym
-from gym.envs.toy_text import frozen_lake, discrete
-from gym.envs.registration import register
-
-import numpy as np
-
-import simulation
 import base_algorithm
-from q_agent import QAgent
-from dynaq_agent import DynaQAgent
+import gym
+import numpy as np
+import simulation
+from gym.envs.registration import register
 
 register(
     id='Deterministic-4x4-FrozenLake-v0',
@@ -44,9 +39,9 @@ def main():
                  'NChain-v0']
     envs = [ gym.make(name) for name in env_names ]
 
-    #algorithm = base_algorithm.BaseAlgorithm()
+    algorithm = base_algorithm.BaseAlgorithm()
     #algorithm = QAgent(eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
-    algorithm = DynaQAgent(planning_steps=50, eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
+    # algorithm = DynaQAgent(planning_steps=50, eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
 
     horizon = 5000
     num_trials = 10

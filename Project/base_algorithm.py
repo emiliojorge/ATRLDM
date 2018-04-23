@@ -1,6 +1,12 @@
+import json
 from random import choice
 
+from dynaq_agent import DynaQAgent
 from gym import spaces
+from q_agent import QAgent
+
+AGENT_TYPES = {'q': QAgent,
+               'dynaq': DynaQAgent}
 
 
 class BaseAlgorithm(object):
@@ -9,13 +15,26 @@ class BaseAlgorithm(object):
 
         self.agents = []
 
+        self._set_up()
+
+    def _set_up(self):
+        """
+        Sets up the Ensemble RL agent by reading configs from config.json.
+        :return: None
+        """
+        with open('config.json') as config_file:
+            config = json.load(config_file)
+
+        for a in config['start_agents']:
+            agent = AGENT_TYPES[a]()
+            self.agents.append(agent)
+
     def reset(self):
         """
         This should reset the algorithm so that it is ready for a new environment
         """
         for a in self.agents:
             a.reset()
-
 
     def initialize(self, num_states, num_action, discount):
         """
@@ -39,7 +58,7 @@ class BaseAlgorithm(object):
         """
 
         for a in self.agents:
-            a.observe_tranisition(state, action, next_state, reward)
+            a.observe_transition(state, action, next_state, reward)
 
     def play(self, state):
         """
