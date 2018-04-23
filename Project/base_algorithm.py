@@ -37,8 +37,10 @@ class BaseAlgorithm(object):
         """
         This should reset the algorithm so that it is ready for a new environment
         """
-        for a in self.agents:
-            a.reset()
+        # for a in self.agents:
+        #     a.reset()
+        self.agents = []
+        self._set_up()
 
     def initialize(self, num_states, num_action, discount):
         """
