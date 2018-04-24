@@ -5,11 +5,13 @@ import numpy as np
 from dynaq_agent import DynaQAgent
 from gym import spaces
 from q_agent import QAgent
+from bayesian_qlearning import Bayesian_Qlearning
 from zapq_agent import ZapQAgent
 
 AGENT_TYPES = {'q': QAgent,
                'dynaq': DynaQAgent,
-               'zapq': ZapQAgent}
+               'zapq': ZapQAgent,
+               'bayesQ': Bayesian_Qlearning}
 
 
 class BaseAlgorithm(object):
