@@ -5,9 +5,11 @@ import numpy as np
 from dynaq_agent import DynaQAgent
 from gym import spaces
 from q_agent import QAgent
+from zapq_agent import ZapQAgent
 
 AGENT_TYPES = {'q': QAgent,
-               'dynaq': DynaQAgent}
+               'dynaq': DynaQAgent,
+               'zapq': ZapQAgent}
 
 
 class BaseAlgorithm(object):
@@ -62,6 +64,8 @@ class BaseAlgorithm(object):
         next_state and obtains reward
 
         """
+        if not all((state, action, next_state, reward)):
+            return
 
         for a in self.agents:
             a.observe_transition(state, action, next_state, reward)

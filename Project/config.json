@@ -1,7 +1,8 @@
 {
   "start_agents": [
     "q",
-    "dynaq"
+    "dynaq",
+    "zapq"
   ],
   "greediness": 1.5
 }
