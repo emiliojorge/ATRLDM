@@ -40,10 +40,11 @@ def convert_space_to_integer(data, space):
 
         return idx
 
-    if isinstance(data, int):
+    elif np.issubdtype(type(data), np.integer):
         return data
 
-    #raise NotImplementedError
+    else:
+        raise NotImplementedError
 
 
 
