@@ -1,6 +1,7 @@
 import base_algorithm
 from bayesian_qlearning import Bayesian_Qlearning
 from random_agent import RandomAgent
+from speedyQ import Speedy_Qlearning
 import gym
 import numpy as np
 import simulation
@@ -49,6 +50,7 @@ def main():
 	# algorithm = DynaQAgent(planning_steps=50, eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
 	#algorithm = Bayesian_Qlearning(action_selection="random", update_method="mom")
 	#algorithm = RandomAgent()
+	algorithm = Speedy_Qlearning()
 
 	horizon = 20000
 	num_trials = 3
