@@ -37,6 +37,9 @@ def main():
 				 'Blackjack-v0',
 				 'Roulette-v0',
 				 'NChain-v0']
+
+	rng = np.random.RandomState(25)
+	env_names = rng.choice(env_names, size=12, replace=True)
 	envs = [ gym.make(name) for name in env_names ]
 
 	algorithm = base_algorithm.BaseAlgorithm()
