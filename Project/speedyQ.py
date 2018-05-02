@@ -7,7 +7,8 @@ class Speedy_Qlearning(object):
 	"""
 
 	def __init__(self):
-		pass
+		self.algorithm = "Speedy_Qlearning"
+
 
 	def reset(self):
 		"""

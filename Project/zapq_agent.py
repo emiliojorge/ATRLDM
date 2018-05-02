@@ -12,6 +12,8 @@ class ZapQAgent(object):
         self.learning_rate = learning_rate
         self.learning_rate_gamma = lambda n: 1 / n ** 0.75
 
+        self.algorithm = "ZapQAgent"
+
         self.discount = None
         self.num_states = None
         self.num_action = None

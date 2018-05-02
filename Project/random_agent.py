@@ -5,7 +5,7 @@ class RandomAgent(object):
 	"""An agent using random actions"""
 
 	def __init__(self):
-		pass
+		self.algorithm = "Random"
 
 	def reset(self):
 		"""
