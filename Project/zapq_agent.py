@@ -4,12 +4,11 @@ import numpy as np
 class ZapQAgent(object):
     """An agent using Q-learning and an epsilon-greedy policy."""
 
-    def __init__(self, exploration=False, eps_start=1.0, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1 / n):
+    def __init__(self, exploration=False, explorer=None, learning_rate=lambda n: 1 / n):
 
         self.exploration = exploration
-        self.eps_start = eps_start
-        self.eps_end = eps_end
-        self.eps_num = eps_num
+        self.explorer = explorer
+
         self.learning_rate = learning_rate
         self.learning_rate_gamma = lambda n: 1 / n ** 0.75
 
@@ -19,7 +18,6 @@ class ZapQAgent(object):
         self.num_states = None
         self.num_action = None
 
-        self.eps = lambda n: self.eps_start - (self.eps_start - self.eps_end) / self.eps_num * n
         self.lamda = 0.95
 
         self.Q = None
@@ -53,14 +51,8 @@ class ZapQAgent(object):
 
         self.nu = np.zeros((num_states, num_action))  # state-action pair visit counts
 
-    def get_exploration(self):
-        """Get linearly decaying for epsilon-greedy policy."""
-        num_episodes = np.sum(self.nu)
-
-        if num_episodes >= self.eps_num:
-            return self.eps_end
-        else:
-            return self.eps_start - (self.eps_start - self.eps_end) / self.eps_num * num_episodes
+        if self.explorer:
+            self.explorer.reset()
 
     def get_step(self, state, action):
         """
@@ -111,7 +103,7 @@ class ZapQAgent(object):
         if state is None:
             return 0
 
-        if self.exploration and np.random.random() < self.get_exploration():
+        if self.exploration and np.random.random() < self.explorer.get_eps():
             return np.random.randint(0, self.num_action)
         else:
             return np.argmax(self.Q[state, :])

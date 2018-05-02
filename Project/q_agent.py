@@ -4,12 +4,12 @@ import numpy as np
 class QAgent(object):
     """An agent using Q-learning and an epsilon-greedy policy."""
 
-    def __init__(self, double=True, exploration=False, eps_start=1.0, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n**0.5):
+    def __init__(self, double=True, exploration=False, explorer=None, learning_rate=lambda n: 1/n**0.5):
         self.double = double # Enables double Q-learning
+
         self.exploration = exploration
-        self.eps_start = eps_start
-        self.eps_end = eps_end
-        self.eps_num = eps_num
+        self.explorer = explorer
+
         self.learning_rate = learning_rate
         self.algorithm = "Q-learning"
 
@@ -31,7 +31,8 @@ class QAgent(object):
         self.num_states = num_states
         self.num_action = num_action
 
-        self.eps = lambda n: self.eps_start - (self.eps_start-self.eps_end)/self.eps_num * n
+        if self.explorer:
+            self.explorer.reset()
 
         if self.double:
             self.Q1 = np.zeros((num_states, num_action))
@@ -40,16 +41,6 @@ class QAgent(object):
             self.Q = np.zeros((num_states, num_action))
 
         self.nu = np.zeros((num_states, num_action)) # state-action pair visit counts
-
-    def get_exploration(self):
-        """Get linearly decaying for epsilon-greedy policy."""
-        num_episodes = np.sum(self.nu)
-
-        if num_episodes >= self.eps_num:
-            return self.eps_end
-        else:
-            return self.eps_start - (self.eps_start-self.eps_end)/self.eps_num * num_episodes
-
 
     def get_step(self, state, action):
         """
@@ -94,7 +85,7 @@ class QAgent(object):
         if state is None:
             return 0
 
-        if self.exploration and np.random.random() < self.get_exploration():
+        if self.exploration and np.random.random() < self.explorer.get_eps():
             return np.random.randint(0, self.num_action)
         else:
             if self.double:
