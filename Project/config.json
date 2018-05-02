@@ -2,7 +2,7 @@
   "start_agents": [
     "q",
     "dynaq",
-    "zapq"
+    "bayesQ"
   ],
   "greediness": 1.5
 }

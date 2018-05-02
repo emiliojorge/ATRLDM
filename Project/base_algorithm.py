@@ -1,11 +1,12 @@
 import json
 import math
 
+import matplotlib.pyplot as plt
 import numpy as np
+from bayesian_qlearning import Bayesian_Qlearning
 from dynaq_agent import DynaQAgent
 from gym import spaces
 from q_agent import QAgent
-from bayesian_qlearning import Bayesian_Qlearning
 from zapq_agent import ZapQAgent
 
 AGENT_TYPES = {'q': QAgent,
@@ -19,6 +20,7 @@ class BaseAlgorithm(object):
         self.action_space = None
 
         self.agents = []
+        self.td_errors = None
         self.greediness = None
 
         self._set_up()
@@ -43,7 +45,12 @@ class BaseAlgorithm(object):
         """
         # for a in self.agents:
         #     a.reset()
-        self.agents = []
+        # self.agents = []
+        if self.td_errors:
+            # for errors in self.td_errors:
+            plt.hist(self.td_errors, bins=20)
+            plt.show()
+
         self._set_up()
 
     def initialize(self, num_states, num_action, discount):
@@ -59,6 +66,8 @@ class BaseAlgorithm(object):
         for a in self.agents:
             a.initialize(num_states, num_action, discount)
 
+        self.td_errors = [[]] * len(self.agents)
+
     def observe_transition(self, state, action, next_state, reward):
         """
         Observe a new transition: state,action,next_state,reward
@@ -69,8 +78,9 @@ class BaseAlgorithm(object):
         if not all((state, action, next_state, reward)):
             return
 
-        for a in self.agents:
-            a.observe_transition(state, action, next_state, reward)
+        for i, a in enumerate(self.agents):
+            td_error = a.observe_transition(state, action, next_state, reward)
+            self.td_errors[i].append(td_error)
 
     def _majority_vote(self, agents_actions):
         """

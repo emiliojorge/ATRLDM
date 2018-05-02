@@ -1,6 +1,5 @@
 import numpy as np
 
-from gym import spaces
 
 class QAgent(object):
     """An agent using Q-learning and an epsilon-greedy policy."""
@@ -69,12 +68,17 @@ class QAgent(object):
             # Flip a coin to decide which Q to update
             if np.random.random() < 0.5:
                 max_a = np.argmax(self.Q1[next_state,:])
-                self.Q1[state,action] += self.get_step(state, action) * (reward + self.discount * self.Q2[next_state,max_a] - self.Q1[state,action])
+                td_error = reward + self.discount * self.Q2[next_state, max_a] - self.Q1[state, action]
+                self.Q1[state, action] += self.get_step(state, action) * td_error
             else:
                 max_a = np.argmax(self.Q2[next_state,:])
-                self.Q2[state,action] += self.get_step(state, action) * (reward + self.discount * self.Q1[next_state,max_a] - self.Q2[state,action])
+                td_error = reward + self.discount * self.Q1[next_state, max_a] - self.Q2[state, action]
+                self.Q2[state, action] += self.get_step(state, action) * td_error
         else:
-            self.Q[state,action] += self.get_step(state, action) * (reward + self.discount * np.max(self.Q[next_state,:]) - self.Q[state,action])
+            td_error = reward + self.discount * np.max(self.Q[next_state, :]) - self.Q[state, action]
+            self.Q[state, action] += self.get_step(state, action) * td_error
+
+        return td_error
 
     def play(self, state):
         """

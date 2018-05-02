@@ -1,6 +1,4 @@
 import base_algorithm
-from bayesian_qlearning import Bayesian_Qlearning
-from random_agent import RandomAgent
 import gym
 import numpy as np
 import simulation
@@ -41,7 +39,7 @@ def main():
 				 'NChain-v0']
 	envs = [ gym.make(name) for name in env_names ]
 
-	#algorithm = base_algorithm.BaseAlgorithm()
+	algorithm = base_algorithm.BaseAlgorithm()
 	#algorithm = QAgent(eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
 	# algorithm = DynaQAgent(planning_steps=50, eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
 	#algorithm = Bayesian_Qlearning(action_selection="random", update_method="mom")
