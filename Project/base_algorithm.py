@@ -8,13 +8,15 @@ from q_agent import QAgent
 from bayesian_qlearning import Bayesian_Qlearning
 from zapq_agent import ZapQAgent
 from speedyQ import Speedy_Qlearning
+from mean_agent import MeanAgent
 
 
 AGENT_TYPES = {'q': QAgent,
 			   'dynaq': DynaQAgent,
 			   'zapq': ZapQAgent,
 			   'bayesQ': Bayesian_Qlearning,
-			   'speedyQ': Speedy_Qlearning}
+			   'speedyQ': Speedy_Qlearning,
+			   'mean': MeanAgent}
 
 
 class BaseAlgorithm(object):
