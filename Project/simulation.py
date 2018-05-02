@@ -59,6 +59,7 @@ def simulate(env, algorithm, T=4194304, num_trials=20, discount=1):
         num_trials: The number of trials
         discount The discount factor
     """
+    print("Running env: " + str(env))
     cumulative_rewards = np.zeros(num_trials)
     for trial in range(num_trials):
         # Reset environment and get initial state

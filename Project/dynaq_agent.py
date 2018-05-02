@@ -1,6 +1,5 @@
 import numpy as np
 
-from gym import spaces
 
 class DynaQAgent(object):
     """A Dyna-Q agent using an epsilon-greedy policy."""
@@ -101,13 +100,16 @@ class DynaQAgent(object):
 
         """
         self.nu[state,action] += 1
-        self.Q[state,action] += self.get_step(state, action) * (reward + self.discount * np.max(self.Q[next_state,:]) - self.Q[state,action])
+        td_error = reward + self.discount * np.max(self.Q[next_state, :]) - self.Q[state, action]
+        self.Q[state, action] += self.get_step(state, action) * td_error
         
         if state: # Don't add terminal state to model
             self.update_model(state, action, next_state, reward)
         
         if len(self.model.keys()) > 0:
             self.plan()
+
+        return td_error
 
     def play(self, state):
         """
