@@ -11,6 +11,7 @@ class QAgent(object):
         self.eps_end = eps_end
         self.eps_num = eps_num
         self.learning_rate = learning_rate
+        self.algorithm = "Q-learning"
 
     def reset(self):
         """

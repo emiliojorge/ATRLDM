@@ -13,6 +13,7 @@ class Bayesian_Qlearning():
 		self.action_selection=action_selection
 		self.update_method = update_method
 		self.parameter_decay = parameter_decay
+		self.algorithm = "Bayesian_Qlearning"
 
 	def initialize(self, num_states, num_action, discount, mu_init=1, lam_init=1, alpha_init=1.05, beta_init=1):
 		self.discount = discount

@@ -23,7 +23,7 @@ class BaseAlgorithm(object):
 
 		self.agents = []
 		self.greediness = None
-
+		self.algorithm = "BaseAlgorithm"
 		self._set_up()
 
 	def _set_up(self):
