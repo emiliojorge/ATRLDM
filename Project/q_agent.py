@@ -4,7 +4,7 @@ import numpy as np
 class QAgent(object):
     """An agent using Q-learning and an epsilon-greedy policy."""
 
-    def __init__(self, double=False, exploration=False, eps_start=1.0, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n**0.5):
+    def __init__(self, double=True, exploration=False, eps_start=1.0, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n**0.5):
         self.double = double # Enables double Q-learning
         self.exploration = exploration
         self.eps_start = eps_start
