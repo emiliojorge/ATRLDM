@@ -7,7 +7,7 @@ class MeanAgent(object):
        step which is taken as the mean of previous rewards."""
 
     def __init__(self):
-        pass
+        self.algorithm = "MeanAgent"
 
     def reset(self):
         """
