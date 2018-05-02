@@ -6,7 +6,7 @@ class Speedy_Qlearning(object):
 	For documentation on arguments see Qlearning function above
 	"""
 
-	def __init__(self):
+	def __init__(self, exploration=False):
 		self.algorithm = "Speedy_Qlearning"
 
 

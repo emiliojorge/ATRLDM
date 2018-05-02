@@ -4,8 +4,9 @@ import numpy as np
 class ZapQAgent(object):
     """An agent using Q-learning and an epsilon-greedy policy."""
 
-    def __init__(self, eps_start=1.0, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1 / n):
+    def __init__(self, exploration=False, eps_start=1.0, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1 / n):
 
+        self.exploration = exploration
         self.eps_start = eps_start
         self.eps_end = eps_end
         self.eps_num = eps_num
@@ -110,7 +111,7 @@ class ZapQAgent(object):
         if state is None:
             return 0
 
-        if np.random.random() < self.get_exploration():
+        if self.exploration and np.random.random() < self.get_exploration():
             return np.random.randint(0, self.num_action)
         else:
             return np.argmax(self.Q[state, :])
