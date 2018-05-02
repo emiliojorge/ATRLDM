@@ -12,15 +12,17 @@ from zapq_agent import ZapQAgent
 
 AGENT_TYPES = {'q': QAgent,
                'dynaq': DynaQAgent,
-               'zapq': ZapQAgent,
                'bayesQ': Bayesian_Qlearning,
                'speedyQ': Speedy_Qlearning,
                'mean': MeanAgent}
 
 
 class BaseAlgorithm(object):
-    def __init__(self):
+    def __init__(self, exploration=False, explorer=None):
         self.action_space = None
+
+        self.exploration = exploration
+        self.explorer = explorer
 
         self.agents = []
         self.greediness = None
@@ -60,8 +62,14 @@ class BaseAlgorithm(object):
         """
         self.action_space = spaces.Discrete(num_action)
 
+        self.num_action = num_action
+        self.num_states = num_states
+
         for a in self.agents:
             a.initialize(num_states, num_action, discount)
+
+        if self.explorer:
+            self.explorer.reset()
 
     def observe_transition(self, state, action, next_state, reward):
         """
@@ -104,10 +112,14 @@ class BaseAlgorithm(object):
         Returns:
             The action to play
         """
-        actions = []
 
-        for agent in self.agents:
-            action = agent.play(state)
-            actions.append(action)
+        if self.exploration and np.random.random() < self.explorer.get_eps():
+            return np.random.randint(0, self.num_action)
+        else:
+            actions = []
 
-        return self._majority_vote(actions)
+            for agent in self.agents:
+                action = agent.play(state)
+                actions.append(action)
+
+            return self._majority_vote(actions)
