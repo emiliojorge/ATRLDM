@@ -92,13 +92,13 @@ def speedy_Qlearning(env, num_observations, gamma=0.95, learning_rate=utility.po
 
 @utility.timing # Will print the time it takes to run this function.
 def bayesian_Qlearning(env, num_observations, gamma=0.95,
-		mu_init=1, lam_init=1, alpha_init=1.05, beta_init=1,
-		action_selection="vpi", update_method="mixed"):
+		mu_init=1, lam_init=1, alpha_init=1.05, beta_init=10,
+		action_selection="vpi", update_method="mixed", decay=1):
 	""" Implements the Bayesian Qlearning.
 
 	For documentation on arguments see Qlearning function above
 	"""
-	n = np.zeros((env.nS, env.nA))
+	n = np.ones((env.nS, env.nA))
 	mu0 = np.ones((env.nS, env.nA))*mu_init
 	lam = np.ones((env.nS, env.nA))*lam_init
 	alpha = np.ones((env.nS, env.nA))*alpha_init
@@ -133,6 +133,7 @@ def bayesian_Qlearning(env, num_observations, gamma=0.95,
 		#print("c", c)
 		vpi = []
 		for action, (a, mu, b, l, c_i) in enumerate(zip(alpha[state,:], mu0[state,:], beta[state,:], lam[state,:], c )):
+			print(action, a, mu, b, l, c_i)
 			if action == a_star:
 				vpi.append(c_i + (mu_second-mu_star)*cdf(mu_second, mu, a, b, l))
 			else:
@@ -142,8 +143,8 @@ def bayesian_Qlearning(env, num_observations, gamma=0.95,
 		print("vpi",vpi)
 		return vpi
 
-	def posterior(state, action, M1, M2, update=True):
-		n[state,action] += 1
+	def posterior(state, action, M1, M2, update=True, decay=1):
+		#n[state,action] += 1
 		mu0_new = (lam[state,action]*mu0[state,action]+
 					n[state,action]*M1)/(lam[state,action]+n[state,action])
 		lam_new = lam[state,action] + n[state,action]
@@ -153,9 +154,9 @@ def bayesian_Qlearning(env, num_observations, gamma=0.95,
 		)
 		if update==True:
 			mu0[state,action] = mu0_new
-			lam[state,action] = lam_new
-			alpha[state,action] = alpha_new
-			beta[state,action] = beta_new
+			lam[state,action] = lam_new*decay
+			alpha[state,action] = alpha_new*decay
+			beta[state,action] = beta_new*decay
 		return mu0_new, lam_new, alpha_new, beta_new
 
 	def normal_gamma_pdf(x, tau, mu, l, a, b):
@@ -190,7 +191,7 @@ def bayesian_Qlearning(env, num_observations, gamma=0.95,
 				s+=fun(vals[0], vals[1], vals[2])
 				print(vals)
 				print(fun(vals[0], vals[1], vals[2]))
-			return s/repeats
+			return s/repeats*(limits[0][1]-limits[0][0])*(limits[1][1]-limits[1][0])*(limits[2][1]-limits[2][0])
 
 		#E_tau,_ = tplquad(lambda x,mu,tau: tau*integrand(x,mu,tau),0,25,lambda x: 0., lambda x: 1.,lambda x,y: 0.,lambda x,y: 1000., epsabs=0.01, epsrel=0.1)
 		#E_tau_mu,_ = tplquad(lambda x,mu,tau: mu*tau*integrand(x,mu,tau),0,25,lambda x: 0., lambda x: 1.,lambda x,y: 0.,lambda x,y: 1000.,epsabs=0.01, epsrel=0.1)
@@ -245,7 +246,7 @@ def bayesian_Qlearning(env, num_observations, gamma=0.95,
 
 		if update_method == "mom":
 			M1,M2 = moments(reward, next_observation)
-			_, _,_,_ = posterior(observation, action, M1, M2, update=True)
+			_, _,_,_ = posterior(observation, action, M1, M2, update=True, decay=decay)
 
 		elif update_method == "mixed":
 			update_mixed(observation, action, reward, next_observation)
