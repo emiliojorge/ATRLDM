@@ -54,12 +54,12 @@ def main():
 
 	envs = [ gym.make(name) for name in env_names ]
 
-	#algorithm = base_algorithm.BaseAlgorithm()
-	#algorithm = QAgent(eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
-	# algorithm = DynaQAgent(planning_steps=50, eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
-	#algorithm = Bayesian_Qlearning(action_selection="random", update_method="mom")
-	#algorithm = RandomAgent()
-	algorithm = Speedy_Qlearning()
+	#algorithm = BaseAlgorithm()
+	#algorithm = QAgent()#eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
+	#algorithm = DynaQAgent()#planning_steps=50, eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
+	algorithm = Bayesian_Qlearning()#action_selection="q-sampling", update_method="mom")
+	random_algorithm = RandomAgent()
+	#algorithm = Speedy_Qlearning()
 
 	horizon = 20000
 	num_trials = 3
