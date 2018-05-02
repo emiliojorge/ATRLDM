@@ -5,8 +5,9 @@ from gym import spaces
 class DynaQAgent(object):
     """A Dyna-Q agent using an epsilon-greedy policy."""
 
-    def __init__(self, planning_steps=50, eps_start=1.0, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n**0.5):
+    def __init__(self, planning_steps=25, exploration=False, eps_start=1.0, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n**0.5):
         self.planning_steps = planning_steps
+        self.exploration = exploration
         self.eps_start = eps_start
         self.eps_end = eps_end
         self.eps_num = eps_num
@@ -120,7 +121,7 @@ class DynaQAgent(object):
         if state is None:
             return 0
 
-        if np.random.random() < self.get_exploration():
+        if self.exploration and np.random.random() < self.get_exploration():
             return np.random.randint(0, self.num_action)
         else:
             return np.argmax(self.Q[state,:])

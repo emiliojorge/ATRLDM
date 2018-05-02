@@ -3,6 +3,7 @@ from bayesian_qlearning import Bayesian_Qlearning
 from random_agent import RandomAgent
 from speedyQ import Speedy_Qlearning
 from dynaq_agent import DynaQAgent
+from zapq_agent import ZapQAgent
 from q_agent import QAgent
 from mean_agent import MeanAgent
 import time
@@ -47,15 +48,16 @@ def main():
 
 	rng = np.random.RandomState(25)
 
-	repeat_algorithms = False
+	repeat_environments = False
 	compare_random = True
 
-	if repeat_algorithms == True:
+	if repeat_environments == True:
 		env_names = rng.choice(env_names, size=12, replace=True)
 
 	envs = [ gym.make(name) for name in env_names ]
 
 	algorithm = BaseAlgorithm()
+	#algorithm = ZapQAgent()
 	#algorithm = QAgent()#eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
 	#algorithm = DynaQAgent()#planning_steps=50, eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
 	#algorithm = Bayesian_Qlearning()#action_selection="q-sampling", update_method="mom")
