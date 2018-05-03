@@ -1,28 +1,37 @@
 import json
 import math
-
-import matplotlib.pyplot as plt
+from collections import defaultdict
+from copy import deepcopy
 import numpy as np
 from bayesian_qlearning import Bayesian_Qlearning
 from dynaq_agent import DynaQAgent
 from gym import spaces
+from mean_agent import MeanAgent
 from q_agent import QAgent
+from speedyQ import Speedy_Qlearning
 from zapq_agent import ZapQAgent
+
 
 AGENT_TYPES = {'q': QAgent,
                'dynaq': DynaQAgent,
-               'zapq': ZapQAgent,
-               'bayesQ': Bayesian_Qlearning}
+               'bayesQ': Bayesian_Qlearning,
+               'speedyQ': Speedy_Qlearning,
+               'mean': MeanAgent}
 
 
 class BaseAlgorithm(object):
-    def __init__(self):
+    def __init__(self, exploration=False, explorer=None, use_database=True):
         self.action_space = None
+        self.use_database = use_database
+        self.exploration = exploration
+        self.explorer = explorer
+        self.agent_database = defaultdict(list)
+        self.num_action = None
+        self.num_states = None
 
         self.agents = []
-        self.td_errors = None
         self.greediness = None
-
+        self.algorithm = "BaseAlgorithm"
         self._set_up()
 
     def _set_up(self):
@@ -39,18 +48,19 @@ class BaseAlgorithm(object):
 
         self.greediness = config['greediness']
 
+        #Get stored agents
+        if (self.use_database == True and self.num_states != None and
+        self.agent_database[(self.num_states, self.num_action)]!=[]):
+            for a in np.random.choice(self.agent_database[(self.num_states, self.num_action)], size=2):
+                self.agents.append(a)
+
     def reset(self):
         """
         This should reset the algorithm so that it is ready for a new environment
         """
         # for a in self.agents:
         #     a.reset()
-        # self.agents = []
-        if self.td_errors:
-            # for errors in self.td_errors:
-            plt.hist(self.td_errors, bins=20)
-            plt.show()
-
+        self.agents = []
         self._set_up()
 
     def initialize(self, num_states, num_action, discount):
@@ -61,12 +71,21 @@ class BaseAlgorithm(object):
             num_action: int, the number of actions in the environment
             discount: double in [0, 1], the discount factor
         """
+        #Save old agents
+        if self.use_database == True and self.num_states != None:
+            for a in self.agents:
+                self.agent_database[(self.num_states, self.num_action)].append(deepcopy(a))
+
         self.action_space = spaces.Discrete(num_action)
+
+        self.num_action = num_action
+        self.num_states = num_states
 
         for a in self.agents:
             a.initialize(num_states, num_action, discount)
 
-        self.td_errors = [[]] * len(self.agents)
+        if self.explorer:
+            self.explorer.reset()
 
     def observe_transition(self, state, action, next_state, reward):
         """
@@ -75,12 +94,11 @@ class BaseAlgorithm(object):
         next_state and obtains reward
 
         """
-        if not all((state, action, next_state, reward)):
-            return
+        if None in (state, action, next_state, reward):
+            raise ValueError(state, action, next_state, reward)
 
-        for i, a in enumerate(self.agents):
-            td_error = a.observe_transition(state, action, next_state, reward)
-            self.td_errors[i].append(td_error)
+        for a in self.agents:
+            a.observe_transition(state, action, next_state, reward)
 
     def _majority_vote(self, agents_actions):
         """
@@ -110,10 +128,14 @@ class BaseAlgorithm(object):
         Returns:
             The action to play
         """
-        actions = []
 
-        for agent in self.agents:
-            action = agent.play(state)
-            actions.append(action)
+        if self.exploration and np.random.random() < self.explorer.get_eps():
+            return np.random.randint(0, self.num_action)
+        else:
+            actions = []
 
-        return self._majority_vote(actions)
+            for agent in self.agents:
+                action = agent.play(state)
+                actions.append(action)
+
+            return self._majority_vote(actions)

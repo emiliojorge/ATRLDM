@@ -4,12 +4,12 @@ import numpy as np
 class DynaQAgent(object):
     """A Dyna-Q agent using an epsilon-greedy policy."""
 
-    def __init__(self, planning_steps=25, exploration=False, eps_start=1.0, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n**0.5):
+    def __init__(self, planning_steps=25, exploration=False, explorer=None, learning_rate=lambda n: 1/n**0.5):
         self.planning_steps = planning_steps
+
         self.exploration = exploration
-        self.eps_start = eps_start
-        self.eps_end = eps_end
-        self.eps_num = eps_num
+        self.explorer = explorer
+
         self.learning_rate = learning_rate
         self.algorithm = "DynaQ"
 
@@ -31,21 +31,13 @@ class DynaQAgent(object):
         self.num_states = num_states
         self.num_action = num_action
 
-        self.eps = lambda n: self.eps_start - (self.eps_start-self.eps_end)/self.eps_num * n
-
         self.Q = np.zeros((num_states, num_action))
         self.nu = np.zeros((num_states, num_action)) # state-action pair visit counts
 
         self.model = {}
 
-    def get_exploration(self):
-        """Get linearly decaying for epsilon-greedy policy."""
-        num_episodes = np.sum(self.nu)
-
-        if num_episodes >= self.eps_num:
-            return self.eps_end
-        else:
-            return self.eps_start - (self.eps_start-self.eps_end)/self.eps_num * num_episodes
+        if self.explorer:
+            self.explorer.reset()
 
     def get_step(self, state, action):
         """
@@ -102,10 +94,10 @@ class DynaQAgent(object):
         self.nu[state,action] += 1
         td_error = reward + self.discount * np.max(self.Q[next_state, :]) - self.Q[state, action]
         self.Q[state, action] += self.get_step(state, action) * td_error
-        
+
         if state: # Don't add terminal state to model
             self.update_model(state, action, next_state, reward)
-        
+
         if len(self.model.keys()) > 0:
             self.plan()
 
@@ -123,7 +115,7 @@ class DynaQAgent(object):
         if state is None:
             return 0
 
-        if self.exploration and np.random.random() < self.get_exploration():
+        if self.exploration and np.random.random() < self.explorer.get_eps():
             return np.random.randint(0, self.num_action)
         else:
             return np.argmax(self.Q[state,:])
