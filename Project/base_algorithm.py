@@ -48,11 +48,6 @@ class BaseAlgorithm(object):
 
         self.greediness = config['greediness']
 
-        #Get stored agents
-        if (self.use_database == True and self.num_states != None and
-        self.agent_database[(self.num_states, self.num_action)]!=[]):
-            for a in np.random.choice(self.agent_database[(self.num_states, self.num_action)], size=2):
-                self.agents.append(a)
 
     def reset(self):
         """
@@ -60,8 +55,15 @@ class BaseAlgorithm(object):
         """
         # for a in self.agents:
         #     a.reset()
+
+        #Save old agents if applicable
+        if self.use_database == True  and self.num_states != None:
+            for a in self.agents:
+                self.agent_database[(self.num_states, self.num_action)].append(deepcopy(a))
+
         self.agents = []
         self._set_up()
+
 
     def initialize(self, num_states, num_action, discount):
         """
@@ -71,15 +73,17 @@ class BaseAlgorithm(object):
             num_action: int, the number of actions in the environment
             discount: double in [0, 1], the discount factor
         """
-        #Save old agents
-        if self.use_database == True and self.num_states != None:
-            for a in self.agents:
-                self.agent_database[(self.num_states, self.num_action)].append(deepcopy(a))
 
         self.action_space = spaces.Discrete(num_action)
 
         self.num_action = num_action
         self.num_states = num_states
+
+        #Get stored agents
+        if (self.use_database == True and self.num_states != None and
+        self.agent_database[(self.num_states, self.num_action)]!=[]):
+            for a in np.random.choice(self.agent_database[(self.num_states, self.num_action)], size=2):
+                self.agents.append(a)
 
         for a in self.agents:
             a.initialize(num_states, num_action, discount)
