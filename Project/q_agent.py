@@ -43,7 +43,7 @@ class QAgent(object):
             self.Q1 = np.zeros((num_states, num_action))
             self.Q2 = np.zeros((num_states, num_action))
         else:
-            self.Q = np.ones((num_states, num_action))
+            self.Q = np.zeros((num_states, num_action))
 
         self.nu = np.zeros((num_states, num_action)) # state-action pair visit counts
         self.eligibility_traces = np.zeros((num_states, num_action))

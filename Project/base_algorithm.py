@@ -2,6 +2,7 @@ import json
 import math
 from collections import defaultdict
 from copy import deepcopy
+
 import numpy as np
 from bayesian_qlearning import Bayesian_Qlearning
 from dynaq_agent import DynaQAgent
@@ -11,11 +12,11 @@ from q_agent import QAgent
 from speedyQ import Speedy_Qlearning
 from zapq_agent import ZapQAgent
 
-
 AGENT_TYPES = {'q': QAgent,
                'dynaq': DynaQAgent,
                'bayesQ': Bayesian_Qlearning,
                'speedyQ': Speedy_Qlearning,
+               'zapq': ZapQAgent,
                'mean': MeanAgent}
 
 
@@ -42,10 +43,10 @@ class BaseAlgorithm(object):
         with open('config.json') as config_file:
             config = json.load(config_file)
 
-        for a in config['start_agents']:
-            agent = AGENT_TYPES[a]()
+        for name, params in config['start_agents'].items():
+            agent = AGENT_TYPES[name](**params)
             self.agents.append(agent)
-
+        np.random.seed(None)
         self.greediness = config['greediness']
 
     #Reset database

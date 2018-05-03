@@ -1,16 +1,11 @@
-from base_algorithm import BaseAlgorithm
-from bayesian_qlearning import Bayesian_Qlearning
-from random_agent import RandomAgent
-from speedyQ import Speedy_Qlearning
-from dynaq_agent import DynaQAgent
-from zapq_agent import ZapQAgent
-from q_agent import QAgent
-from mean_agent import MeanAgent
 import time
+
 import gym
 import numpy as np
 import simulation
+from base_algorithm import BaseAlgorithm
 from gym.envs.registration import register
+from random_agent import RandomAgent
 from util import EpsilonGreedy
 
 register(
@@ -60,7 +55,7 @@ def main():
 
 	algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=1.0, end=0.01, steps=5000), use_database=True)
 	#algorithm = ZapQAgent()
-	#algorithm = QAgent()#eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
+    # algorithm = QAgent(exploration=True, explorer=EpsilonGreedy(start=0.95, end=0.05, steps=1000))#eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
 	#algorithm = DynaQAgent()#planning_steps=50, eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
 	#algorithm = Bayesian_Qlearning()#action_selection="q-sampling", update_method="mom")
 	#algorithm = Speedy_Qlearning()
