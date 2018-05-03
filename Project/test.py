@@ -69,8 +69,7 @@ def main():
 	random_algorithm = RandomAgent()
 
 	horizon = 20000
-	#Base algorithm agent_database cheats if num_trial>1
-	num_trials = 1
+	num_trials = 5
 
 	print(f'Running {len(env_names)} environments for {horizon} timesteps over {num_trials} trials...')
 	start = time.time()
