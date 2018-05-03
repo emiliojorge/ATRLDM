@@ -4,7 +4,8 @@ import numpy as np
 class DynaQAgent(object):
     """A Dyna-Q agent using an epsilon-greedy policy."""
 
-    def __init__(self, planning_steps=25, exploration=False, explorer=None, learning_rate=lambda n: 1/n**0.5):
+    def __init__(self, planning_steps=25, lamda=0.75, exploration=False, explorer=None,
+                 learning_rate=lambda n: 1 / n ** 0.5):
         self.planning_steps = planning_steps
 
         self.exploration = exploration
@@ -12,6 +13,10 @@ class DynaQAgent(object):
 
         self.learning_rate = learning_rate
         self.algorithm = "DynaQ"
+
+        self.eligibility_traces = None
+        self.lamda = lamda
+        self.learning_rates = None
 
     def reset(self):
         """
@@ -33,6 +38,8 @@ class DynaQAgent(object):
 
         self.Q = np.zeros((num_states, num_action))
         self.nu = np.zeros((num_states, num_action)) # state-action pair visit counts
+        self.eligibility_traces = np.zeros((num_states, num_action))
+        self.learning_rates = np.ones((num_states, num_action))
 
         self.model = {}
 
@@ -92,8 +99,13 @@ class DynaQAgent(object):
 
         """
         self.nu[state,action] += 1
+        self.learning_rates[state, action] = self.get_step(state, action)
+
+        self.eligibility_traces = self.discount * self.lamda * self.eligibility_traces
+        self.eligibility_traces[state, action] += 1
+
         td_error = reward + self.discount * np.max(self.Q[next_state, :]) - self.Q[state, action]
-        self.Q[state, action] += self.get_step(state, action) * td_error
+        self.Q += self.learning_rates * self.eligibility_traces * td_error
 
         if state: # Don't add terminal state to model
             self.update_model(state, action, next_state, reward)
