@@ -99,10 +99,16 @@ def simulate(env, algorithm, T=4194304, num_trials=20, discount=1):
 # returned by single experiment
 def simulate_multiple_environment(envs, algorithm, T=1000, num_trials=4, discount=1):
 
-    rewards = [None]*len(envs)
+    rewards = np.zeros([len(envs), num_trials])
 
-    for i in range(len(envs)):
-        env = envs[i]
-        rewards[i] = simulate(env, algorithm, T, num_trials, discount)
+    for j in range(num_trials):
+        try:
+            algorithm.meta_reset()
+        except AttributeError:
+            pass
+
+        for i in range(len(envs)):
+            env = envs[i]
+            rewards[i,j] = simulate(env, algorithm, T, 1, discount)
 
     return np.asarray(rewards)

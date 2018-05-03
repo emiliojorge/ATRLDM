@@ -48,6 +48,11 @@ class BaseAlgorithm(object):
 
         self.greediness = config['greediness']
 
+    #Reset database
+    def meta_reset(self):
+        self.__init__(self.exploration, self.explorer, self.use_database)
+        self.explorer.reset()
+
 
     def reset(self):
         """
