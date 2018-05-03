@@ -1,6 +1,7 @@
 import json
 import math
-
+from collections import defaultdict
+from copy import deepcopy
 import numpy as np
 from bayesian_qlearning import Bayesian_Qlearning
 from dynaq_agent import DynaQAgent
@@ -10,6 +11,7 @@ from q_agent import QAgent
 from speedyQ import Speedy_Qlearning
 from zapq_agent import ZapQAgent
 
+
 AGENT_TYPES = {'q': QAgent,
                'dynaq': DynaQAgent,
                'bayesQ': Bayesian_Qlearning,
@@ -18,11 +20,14 @@ AGENT_TYPES = {'q': QAgent,
 
 
 class BaseAlgorithm(object):
-    def __init__(self, exploration=False, explorer=None):
+    def __init__(self, exploration=False, explorer=None, use_database=True):
         self.action_space = None
-
+        self.use_database = use_database
         self.exploration = exploration
         self.explorer = explorer
+        self.agent_database = defaultdict(list)
+        self.num_action = None
+        self.num_states = None
 
         self.agents = []
         self.greediness = None
@@ -43,6 +48,12 @@ class BaseAlgorithm(object):
 
         self.greediness = config['greediness']
 
+        #Get stored agents
+        if (self.use_database == True and self.num_states != None and
+        self.agent_database[(self.num_states, self.num_action)]!=[]):
+            for a in np.random.choice(self.agent_database[(self.num_states, self.num_action)], size=2):
+                self.agents.append(a)
+
     def reset(self):
         """
         This should reset the algorithm so that it is ready for a new environment
@@ -60,6 +71,11 @@ class BaseAlgorithm(object):
             num_action: int, the number of actions in the environment
             discount: double in [0, 1], the discount factor
         """
+        #Save old agents
+        if self.use_database == True and self.num_states != None:
+            for a in self.agents:
+                self.agent_database[(self.num_states, self.num_action)].append(deepcopy(a))
+
         self.action_space = spaces.Discrete(num_action)
 
         self.num_action = num_action

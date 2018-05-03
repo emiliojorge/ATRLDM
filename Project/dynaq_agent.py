@@ -94,10 +94,10 @@ class DynaQAgent(object):
         self.nu[state,action] += 1
         td_error = reward + self.discount * np.max(self.Q[next_state, :]) - self.Q[state, action]
         self.Q[state, action] += self.get_step(state, action) * td_error
-        
+
         if state: # Don't add terminal state to model
             self.update_model(state, action, next_state, reward)
-        
+
         if len(self.model.keys()) > 0:
             self.plan()
 

@@ -43,6 +43,7 @@ def main():
 	env_names = ['Deterministic-4x4-FrozenLake-v0',
 				 'Deterministic-8x8-FrozenLake-v0',
 				 'Stochastic-8x8-FrozenLake-v0',
+				 'Stochastic-4x4-FrozenLake-v0',
 				 'Blackjack-v0',
 				 'Roulette-v0',
 				 'NChain-v0']
@@ -57,18 +58,19 @@ def main():
 
 	envs = [ gym.make(name) for name in env_names ]
 
-	algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=1.0, end=0.01, steps=5000))
+	algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=1.0, end=0.01, steps=5000), use_database=True)
 	#algorithm = ZapQAgent()
 	#algorithm = QAgent()#eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
 	#algorithm = DynaQAgent()#planning_steps=50, eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
 	#algorithm = Bayesian_Qlearning()#action_selection="q-sampling", update_method="mom")
 	#algorithm = Speedy_Qlearning()
 	#algorithm = MeanAgent()
-	
+
 	random_algorithm = RandomAgent()
 
 	horizon = 20000
-	num_trials = 10
+	#Base algorithm agent_database cheats if num_trial>1
+	num_trials = 1
 
 	print(f'Running {len(env_names)} environments for {horizon} timesteps over {num_trials} trials...')
 	start = time.time()
