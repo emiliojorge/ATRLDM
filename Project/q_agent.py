@@ -4,7 +4,8 @@ import numpy as np
 class QAgent(object):
     """An agent using Q-learning and an epsilon-greedy policy."""
 
-    def __init__(self, double=True, exploration=False, explorer=None, learning_rate=lambda n: 1/n**0.5):
+    def __init__(self, double=False, lamda=0.75, exploration=False, explorer=None,
+                 learning_rate=lambda n: 1 / n ** 0.5):
         self.double = double # Enables double Q-learning
 
         self.exploration = exploration
@@ -12,6 +13,10 @@ class QAgent(object):
 
         self.learning_rate = learning_rate
         self.algorithm = "Q-learning"
+
+        self.eligibility_traces = None
+        self.lamda = lamda
+        self.learning_rates = None
 
     def reset(self):
         """
@@ -27,7 +32,7 @@ class QAgent(object):
             num_action: int, the number of actions in the environment
             discount: double in [0, 1], the discount factor
         """
-        self.discount = discount
+        self.discount = 0.9
         self.num_states = num_states
         self.num_action = num_action
 
@@ -38,9 +43,11 @@ class QAgent(object):
             self.Q1 = np.zeros((num_states, num_action))
             self.Q2 = np.zeros((num_states, num_action))
         else:
-            self.Q = np.zeros((num_states, num_action))
+            self.Q = np.ones((num_states, num_action))
 
         self.nu = np.zeros((num_states, num_action)) # state-action pair visit counts
+        self.eligibility_traces = np.zeros((num_states, num_action))
+        self.learning_rates = np.ones((num_states, num_action))
 
     def get_step(self, state, action):
         """
@@ -56,20 +63,24 @@ class QAgent(object):
 
         """
         self.nu[state,action] += 1
+        self.learning_rates[state, action] = self.get_step(state, action)
+
+        self.eligibility_traces = self.discount * self.lamda * self.eligibility_traces
+        self.eligibility_traces[state, action] += 1
 
         if self.double:
             # Flip a coin to decide which Q to update
             if np.random.random() < 0.5:
                 max_a = np.argmax(self.Q1[next_state,:])
                 td_error = reward + self.discount * self.Q2[next_state, max_a] - self.Q1[state, action]
-                self.Q1[state, action] += self.get_step(state, action) * td_error
+                self.Q1 += self.learning_rates * self.eligibility_traces * td_error
             else:
                 max_a = np.argmax(self.Q2[next_state,:])
                 td_error = reward + self.discount * self.Q1[next_state, max_a] - self.Q2[state, action]
-                self.Q2[state, action] += self.get_step(state, action) * td_error
+                self.Q2 += self.learning_rates * self.eligibility_traces * td_error
         else:
             td_error = reward + self.discount * np.max(self.Q[next_state, :]) - self.Q[state, action]
-            self.Q[state, action] += self.get_step(state, action) * td_error
+            self.Q += self.learning_rates * self.eligibility_traces * td_error
 
         return td_error
 
