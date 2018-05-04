@@ -7,6 +7,11 @@ from base_algorithm import BaseAlgorithm
 from util import EpsilonGreedy
 import numpy as np
 import pandas as pd
+from speedyQ import Speedy_Qlearning
+from mean_agent import MeanAgent
+from bayesian_qlearning import Bayesian_Qlearning
+from dynaq_agent import DynaQAgent
+from q_agent import QAgent
 
 repetitions = 1
 
@@ -15,17 +20,18 @@ path_to_experiment_configs = "experiments/"
 default_config = 'config.json'
 
 
-algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=0.5, end=0.05, steps=1000),
-                          use_database=True, action_selection = "epsilon greedy")
+#algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=0.5, end=0.05, steps=1000),
+#                          use_database=True, action_selection = "epsilon greedy")
 
 #algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=1, end=0.05, steps=5000),
 #                          use_database=True, action_selection = "majority vote")
+explorer = EpsilonGreedy(start=1., end=0.05, steps=10000)
 
-# algorithm = QAgent(exploration=True, explorer=EpsilonGreedy(start=0.95, end=0.05, steps=1000))#eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
-# algorithm = DynaQAgent()#planning_steps=50, eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
-# algorithm = Bayesian_Qlearning()#action_selection="q-sampling", update_method="mom")
-# algorithm = Speedy_Qlearning()
-# algorithm = MeanAgent()
+# algorithm = QAgent(exploration=True, explorer=explorer)
+# algorithm = DynaQAgent(exploration=True, explorer=explorer)
+# algorithm = Bayesian_Qlearning()
+#algorithm = Speedy_Qlearning(exploration=True, explorer=explorer)
+# algorithm = MeanAgent(exploration=True, explorer=explorer)
 
 
 def generate_experiments():
@@ -71,4 +77,4 @@ with open("results.out", 'w') as out:
             df['std'] = np.std(scores, axis=1)
             full_results = full_results.append(df)
 
-    full_results.to_csv('full_results.csv', index=False)
+    full_results.to_csv(f'full_results_{algorithm.algorithm}.csv', index=False)
