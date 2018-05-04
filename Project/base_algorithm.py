@@ -98,10 +98,13 @@ class BaseAlgorithm(object):
         self.num_states = num_states
 
         #Get stored agents
-        if (self.use_database == True and self.num_states != None and
-        self.agent_database[(self.num_states, self.num_action)]!=[]):
-            for a in np.random.choice(self.agent_database[(self.num_states, self.num_action)], size=3):
-                self.agents.insert(0, a)
+        if (self.use_database == True and self.num_states != None):
+            if len(self.agent_database[(self.num_states, self.num_action)])<3:
+                selected_agents = self.agent_database[(self.num_states, self.num_action)]
+            else:
+                selected_agents = selfnp.random.choice(self.agent_database[(self.num_states, self.num_action)], size=3, resample=False)
+            for a in selected_agents:
+                self.agents.insert(0, deepcopy(a))
 
         for a in self.agents:
             a.initialize(num_states, num_action, discount)
