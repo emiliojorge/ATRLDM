@@ -21,19 +21,20 @@ path_to_experiment_configs = "experiments/"
 default_config = 'config.json'
 
 
-#algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=0.5, end=0.05, steps=1000),
-#                          use_database=True, action_selection = "epsilon greedy")
+#algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=1.0, end=0.05, steps=10000),
+#                          use_database=False, action_selection = "epsilon greedy")
 
-#algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=1, end=0.05, steps=5000),
-#                          use_database=True, action_selection = "majority vote")
+algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=1.0, end=0.05, steps=10000),
+                          use_database=False, action_selection = "majority vote")
+
 explorer = EpsilonGreedy(start=1., end=0.05, steps=10000)
 
-# algorithm = QAgent(exploration=True, explorer=explorer)
-# algorithm = DynaQAgent(exploration=True, explorer=explorer)
+#algorithm = QAgent(exploration=True, explorer=explorer)
+#algorithm = DynaQAgent(exploration=True, explorer=explorer)
 # algorithm = Bayesian_Qlearning()
 #algorithm = Speedy_Qlearning(exploration=True, explorer=explorer)
-# algorithm = MeanAgent(exploration=True, explorer=explorer)
-# algorithm = RandomAgent()
+#algorithm = MeanAgent(exploration=True, explorer=explorer)
+#algorithm = RandomAgent()
 
 
 def generate_experiments():
