@@ -5,6 +5,7 @@ import numpy as np
 import simulation
 from base_algorithm import BaseAlgorithm
 from gym.envs.registration import register
+from bayesian_qlearning import Bayesian_Qlearning
 from random_agent import RandomAgent
 from util import EpsilonGreedy
 
@@ -54,8 +55,9 @@ def main():
 
     envs = [gym.make(name) for name in env_names]
 
-    algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=1.0, end=0.01, steps=5000),
+    algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=0.5, end=0.05, steps=1000),
                               use_database=True)
+
     # algorithm = ZapQAgent()
     # algorithm = QAgent(exploration=True, explorer=EpsilonGreedy(start=0.95, end=0.05, steps=1000))#eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
     # algorithm = DynaQAgent()#planning_steps=50, eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
@@ -77,6 +79,7 @@ def main():
     std_scores = np.std(scores, axis=1)
 
     if compare_random == True:
+<<<<<<< Updated upstream
         random_scores = simulation.simulate_multiple_environment(envs, random_algorithm, T=horizon,
                                                                  num_trials=num_trials,
                                                                  discount=1)
