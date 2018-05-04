@@ -47,6 +47,7 @@ def main():
 
 	repeat_environments = False
 	compare_random = True
+    save_results = True
 
 	if repeat_environments == True:
 		env_names = rng.choice(env_names, size=12, replace=True)
@@ -63,7 +64,7 @@ def main():
 
 	random_algorithm = RandomAgent()
 
-	horizon = 20000
+    horizon = 2000
 	num_trials = 5
 
 	print(f'Running {len(env_names)} environments for {horizon} timesteps over {num_trials} trials...')
@@ -87,6 +88,14 @@ def main():
 		for i, (score,score_std) in enumerate(zip(mean_scores, std_scores)):
 			print(f'Environment: "{env_names[i]}"')
 			print(f'-- Mean reward: {score} -- Var: {score_std}')
+
+    if save_results:
+        with open('results.csv', 'w') as file:
+            file.write('environment, runs, trials, mean_score, std_deviation\n')
+            for env, mean, sigma in zip(env_names, mean_scores, std_scores):
+                file.write('{}, {}, {}, {}, {}\n'.format(env, horizon, num_trials, mean, sigma))
+    else:
+        return env_names, scores
 
 if __name__ == '__main__':
 	main()
