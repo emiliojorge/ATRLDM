@@ -67,8 +67,8 @@ def main():
 
     random_algorithm = RandomAgent()
 
-    horizon = 2000
-    num_trials = 5
+    horizon = 100000
+    num_trials = 10
 
     print(f'Running {len(env_names)} environments for {horizon} timesteps over {num_trials} trials...')
     start = time.time()
