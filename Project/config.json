@@ -2,11 +2,11 @@
   "start_agents": {
     "q": {
       "double": "True",
-      "lamda": 0.75
+      "lamda": 0
     },
     "dynaq": {
       "planning_steps": 25,
-      "lamda": 0.75
+      "lamda": 0
     },
     "bayesQ": {
       "parameter_decay": 0.99

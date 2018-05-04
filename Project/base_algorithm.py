@@ -102,7 +102,7 @@ class BaseAlgorithm(object):
             if len(self.agent_database[(self.num_states, self.num_action)])<3:
                 selected_agents = self.agent_database[(self.num_states, self.num_action)]
             else:
-                selected_agents = selfnp.random.choice(self.agent_database[(self.num_states, self.num_action)], size=3, resample=False)
+                selected_agents = np.random.choice(self.agent_database[(self.num_states, self.num_action)], size=3, replace=False)
             for a in selected_agents:
                 self.agents.insert(0, deepcopy(a))
 

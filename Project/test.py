@@ -51,7 +51,7 @@ def main(algorithm):
     save_results = True
 
     if repeat_environments == True:
-        env_names = rng.choice(env_names, size=12, replace=True)
+        env_names = rng.choice(env_names, size=20, replace=True)
 
     envs = [gym.make(name) for name in env_names]
 
