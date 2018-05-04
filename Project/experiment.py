@@ -4,11 +4,13 @@ import sys
 import test
 from shutil import copyfile
 from base_algorithm import BaseAlgorithm
+from util import EpsilonGreedy
 import numpy as np
 import pandas as pd
 
 repetitions = 1
 
+single_model = True
 path_to_experiment_configs = "experiments/"
 default_config = 'config.json'
 
@@ -49,12 +51,16 @@ def generate_experiments():
 
 with open("results.out", 'w') as out:
     sys.stdout = out
-
+    if single_model:
+        configs = [""]
+    else:
+        configs =  os.listdir(path_to_experiment_configs)
     full_results = pd.DataFrame()
     for i in range(repetitions):
-        for f in os.listdir(path_to_experiment_configs):
+        for f in configs:
             print(f)
-            copyfile(os.path.join(path_to_experiment_configs, f), "config.json")
+            if not single_model:
+                copyfile(os.path.join(path_to_experiment_configs, f), "config.json")
             environments, scores = test.main(algorithm)
 
             df = pd.DataFrame(scores)
