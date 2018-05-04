@@ -79,7 +79,6 @@ def main():
     std_scores = np.std(scores, axis=1)
 
     if compare_random == True:
-<<<<<<< Updated upstream
         random_scores = simulation.simulate_multiple_environment(envs, random_algorithm, T=horizon,
                                                                  num_trials=num_trials,
                                                                  discount=1)
