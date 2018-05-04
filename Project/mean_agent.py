@@ -6,7 +6,9 @@ class MeanAgent(object):
     """An agent acting greedily and myopically by taking the action maximizing the reward in the next
        step which is taken as the mean of previous rewards."""
 
-    def __init__(self):
+    def __init__(self, explorer=None, exploration=False):
+        self.explorer=explorer
+        self.exploration=exploration
         self.algorithm = "MeanAgent"
 
     def reset(self):
@@ -25,6 +27,8 @@ class MeanAgent(object):
         """
         self.num_states = num_states
         self.num_action = num_action
+        if self.exploration:
+            self.explorer.reset()
 
         self.means = np.zeros((num_states, num_action))
         self.visits = np.zeros((num_states, num_action)) # Visit counts
@@ -50,7 +54,7 @@ class MeanAgent(object):
         Returns:
             The action to play
         """
-        if state is None:
-            return 0
-
-        return np.argmax(self.means[state,:])
+        if self.exploration and np.random.random() < self.explorer.get_eps():
+            return np.random.randint(0, self.num_action)
+        else:
+            return np.argmax(self.means[state,:])

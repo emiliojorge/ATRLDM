@@ -9,7 +9,7 @@ from scipy.optimize import brentq as brentq
 class Bayesian_Qlearning():
 	""" Implements the Bayesian Qlearning.
 	"""
-	def __init__(self, action_selection="q-sampling", update_method="mom", parameter_decay=0.99):
+	def __init__(self, action_selection="q-sampling", update_method="mom", parameter_decay=0.99, explorer=None, exploration=None):
 		self.action_selection=action_selection
 		self.update_method = update_method
 		self.parameter_decay = parameter_decay

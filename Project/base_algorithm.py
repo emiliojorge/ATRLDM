@@ -21,7 +21,7 @@ AGENT_TYPES = {'q': QAgent,
 
 
 class BaseAlgorithm(object):
-    def __init__(self, exploration=False, explorer=None, use_database=True):
+    def __init__(self, exploration=False, explorer=None, use_database=True, expert_steps=50, action_selection= "epsilon greedy"):
         self.action_space = None
         self.use_database = use_database
         self.exploration = exploration
@@ -29,6 +29,8 @@ class BaseAlgorithm(object):
         self.agent_database = defaultdict(list)
         self.num_action = None
         self.num_states = None
+        self.expert_steps = expert_steps
+        self.action_selection = action_selection
 
         self.agents = []
         self.greediness = None
@@ -44,7 +46,10 @@ class BaseAlgorithm(object):
             config = json.load(config_file)
 
         for name, params in config['start_agents'].items():
-            agent = AGENT_TYPES[name](**params)
+            if self.action_selection == "epsilon greedy":
+                agent = AGENT_TYPES[name](**params, explorer=deepcopy(self.explorer), exploration=True)
+            else:
+                agent = AGENT_TYPES[name](**params)
             self.agents.append(agent)
         np.random.seed(None)
         self.greediness = config['greediness']
@@ -64,9 +69,13 @@ class BaseAlgorithm(object):
 
         #Save old agents if applicable
         if self.use_database == True  and self.num_states != None:
-            for a in self.agents:
-                self.agent_database[(self.num_states, self.num_action)].append(deepcopy(a))
-
+            if self.action_selection == "epsilon greedy":
+                idx = self.moving_average.argsort()[-2:][::-1]
+                for i in idx:
+                    self.agent_database[(self.num_states, self.num_action)].append(deepcopy(self.agents[i]))
+            else:
+                for a in self.agents:
+                    self.agent_database[(self.num_states, self.num_action)].append(deepcopy(a))
         self.agents = []
         self._set_up()
 
@@ -89,13 +98,18 @@ class BaseAlgorithm(object):
         if (self.use_database == True and self.num_states != None and
         self.agent_database[(self.num_states, self.num_action)]!=[]):
             for a in np.random.choice(self.agent_database[(self.num_states, self.num_action)], size=2):
-                self.agents.append(a)
+                self.agents.insert(0, a)
 
         for a in self.agents:
             a.initialize(num_states, num_action, discount)
 
         if self.explorer:
             self.explorer.reset()
+
+        self.expert_history = np.zeros(len(self.agents))
+        self.expert_counter = None
+        self.moving_average = np.zeros(len(self.agents))
+
 
     def observe_transition(self, state, action, next_state, reward):
         """
@@ -109,6 +123,9 @@ class BaseAlgorithm(object):
 
         for a in self.agents:
             a.observe_transition(state, action, next_state, reward)
+
+        if self.action_selection == "epsilon greedy":
+            self.expert_rewards.append(reward)
 
     def _majority_vote(self, agents_actions):
         """
@@ -129,6 +146,34 @@ class BaseAlgorithm(object):
 
         return np.random.choice(actions, p=policy)
 
+    def _epsilon_greedy_experts(self, state):
+        if self.expert_counter is None or self.expert_counter > self.expert_steps:
+            self._new_expert()
+
+        self.expert_counter += 1
+
+        #"Run down" epsilon in each agent even if they are not used.
+        for i, a in enumerate(self.agents):
+            if i != self.expert_id:
+                try:
+                    a.explorer.get_eps()
+                except AttributeError:
+                    pass
+        return self.agents[self.expert_id].play(state)
+
+    def _new_expert(self):
+        if self.expert_counter is not None:
+            self.moving_average[self.expert_id] = self.moving_average[self.expert_id]*0.9 + (1-0.9)*sum(self.expert_rewards)
+        self.expert_rewards = []
+
+        if np.random.random() < self.explorer.get_eps():
+            self.expert_id = np.random.randint(len(self.agents))
+        else:
+            self.expert_id = np.argmax(self.moving_average)
+
+        self.expert_history[self.expert_id] +=1
+        self.expert_counter = 0
+
     def play(self, state):
         """
         Returns the action to play at state
@@ -139,13 +184,19 @@ class BaseAlgorithm(object):
             The action to play
         """
 
-        if self.exploration and np.random.random() < self.explorer.get_eps():
-            return np.random.randint(0, self.num_action)
+        if self.action_selection == "majority vote":
+            if self.exploration and np.random.random() < self.explorer.get_eps():
+                return np.random.randint(0, self.num_action)
+            else:
+                actions = []
+
+                for agent in self.agents:
+                    action = agent.play(state)
+                    actions.append(action)
+
+                return self._majority_vote(actions)
+        elif self.action_selection == "epsilon greedy":
+            return self._epsilon_greedy_experts(state)
+
         else:
-            actions = []
-
-            for agent in self.agents:
-                action = agent.play(state)
-                actions.append(action)
-
-            return self._majority_vote(actions)
+            raise ValueError("Incorrect method for selecting actions")
