@@ -4,7 +4,7 @@ import numpy as np
 class DynaQAgent(object):
     """A Dyna-Q agent using an epsilon-greedy policy."""
 
-    def __init__(self, planning_steps=25, lamda=0.75, exploration=False, explorer=None,
+    def __init__(self, planning_steps=15, lamda=0.75, exploration=False, explorer=None,
                  learning_rate=lambda n: 1 / n ** 0.5):
         self.planning_steps = planning_steps
 

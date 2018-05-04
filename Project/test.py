@@ -34,7 +34,7 @@ register(
             'is_slippery': True})
 
 
-def main():
+def main(algorithm):
     env_names = ['Deterministic-4x4-FrozenLake-v0',
                  'Deterministic-8x8-FrozenLake-v0',
                  'Stochastic-8x8-FrozenLake-v0',
@@ -46,7 +46,7 @@ def main():
     rng = np.random.RandomState(25)
 
     repeat_environments = False
-    compare_random = True
+    compare_random = False
 
     save_results = True
 
@@ -95,4 +95,7 @@ def main():
     return env_names, scores
 
 if __name__ == '__main__':
-    main()
+    algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=0.5, end=0.05, steps=1000),
+                              use_database=True, action_selection = "epsilon greedy")
+
+    main(algorithm)

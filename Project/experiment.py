@@ -12,6 +12,7 @@ from mean_agent import MeanAgent
 from bayesian_qlearning import Bayesian_Qlearning
 from dynaq_agent import DynaQAgent
 from q_agent import QAgent
+from random_agent import RandomAgent
 
 repetitions = 1
 
@@ -32,6 +33,7 @@ explorer = EpsilonGreedy(start=1., end=0.05, steps=10000)
 # algorithm = Bayesian_Qlearning()
 #algorithm = Speedy_Qlearning(exploration=True, explorer=explorer)
 # algorithm = MeanAgent(exploration=True, explorer=explorer)
+# algorithm = RandomAgent()
 
 
 def generate_experiments():
