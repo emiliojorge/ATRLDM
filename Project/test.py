@@ -34,7 +34,7 @@ register(
             'is_slippery': True})
 
 
-def main():
+def main(algorithm):
     env_names = ['Deterministic-4x4-FrozenLake-v0',
                  'Deterministic-8x8-FrozenLake-v0',
                  'Stochastic-8x8-FrozenLake-v0',
@@ -55,15 +55,6 @@ def main():
 
     envs = [gym.make(name) for name in env_names]
 
-    algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=0.5, end=0.05, steps=1000),
-                              use_database=True)
-
-    # algorithm = ZapQAgent()
-    # algorithm = QAgent(exploration=True, explorer=EpsilonGreedy(start=0.95, end=0.05, steps=1000))#eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
-    # algorithm = DynaQAgent()#planning_steps=50, eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
-    # algorithm = Bayesian_Qlearning()#action_selection="q-sampling", update_method="mom")
-    # algorithm = Speedy_Qlearning()
-    # algorithm = MeanAgent()
 
     random_algorithm = RandomAgent()
 
