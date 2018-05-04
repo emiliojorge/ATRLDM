@@ -5,6 +5,7 @@ import test
 from shutil import copyfile
 
 import numpy as np
+import pandas as pd
 
 repetitions = 1
 
@@ -36,8 +37,19 @@ def generate_experiments():
 with open("results.out", 'w') as out:
     sys.stdout = out
 
+    full_results = pd.DataFrame()
     for i in range(repetitions):
         for f in os.listdir(path_to_experiment_configs):
             print(f)
             copyfile(os.path.join(path_to_experiment_configs, f), "config.json")
-            test.main()
+            environments, scores = test.main()
+
+            df = pd.DataFrame(scores)
+            df['config'] = f
+            df['env'] = environments
+            df['rep'] = i
+            df['mean'] = np.mean(scores, axis=1)
+            df['std'] = np.std(scores, axis=1)
+            full_results = full_results.append(df)
+
+    full_results.to_csv('full_results.csv', index=False)

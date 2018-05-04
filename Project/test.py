@@ -65,7 +65,7 @@ def main():
 
     random_algorithm = RandomAgent()
 
-    horizon = 2000
+    horizon = 200
     num_trials = 5
 
     print(f'Running {len(env_names)} environments for {horizon} timesteps over {num_trials} trials...')
@@ -98,8 +98,8 @@ def main():
             file.write('environment, runs, trials, mean_score, std_deviation\n')
             for env, mean, sigma in zip(env_names, mean_scores, std_scores):
                 file.write('{}, {}, {}, {}, {}\n'.format(env, horizon, num_trials, mean, sigma))
-    else:
-        return env_names, scores
+
+    return env_names, scores
 
 if __name__ == '__main__':
     main()
