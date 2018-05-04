@@ -179,7 +179,7 @@ class BaseAlgorithm(object):
         if np.random.random() < self.explorer.get_eps():
             self.expert_id = np.random.randint(len(self.agents))
         else:
-            self.expert_id = np.argmax(self.moving_average)
+            self.expert_id = np.argmax(self.moving_average+np.random.normal(0,0.00001))
 
         self.expert_history[self.expert_id] +=1
         self.expert_counter = 0
