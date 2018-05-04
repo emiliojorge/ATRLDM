@@ -32,7 +32,7 @@ class QAgent(object):
             num_action: int, the number of actions in the environment
             discount: double in [0, 1], the discount factor
         """
-        self.discount = 0.9
+        self.discount = discount
         self.num_states = num_states
         self.num_action = num_action
 

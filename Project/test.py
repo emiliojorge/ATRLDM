@@ -5,6 +5,7 @@ import numpy as np
 import simulation
 from base_algorithm import BaseAlgorithm
 from gym.envs.registration import register
+from bayesian_qlearning import Bayesian_Qlearning
 from random_agent import RandomAgent
 from util import EpsilonGreedy
 
@@ -54,19 +55,11 @@ def main():
 
     envs = [gym.make(name) for name in env_names]
 
-    algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=1.0, end=0.01, steps=5000),
-                              use_database=True)
-    # algorithm = ZapQAgent()
-    # algorithm = QAgent(exploration=True, explorer=EpsilonGreedy(start=0.95, end=0.05, steps=1000))#eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
-    # algorithm = DynaQAgent()#planning_steps=50, eps_start=0.95, eps_end=0.05, eps_num=1000, learning_rate=lambda n: 1/n)
-    # algorithm = Bayesian_Qlearning()#action_selection="q-sampling", update_method="mom")
-    # algorithm = Speedy_Qlearning()
-    # algorithm = MeanAgent()
 
     random_algorithm = RandomAgent()
 
-    horizon = 200
-    num_trials = 5
+    horizon = 100000
+    num_trials = 10
 
     print(f'Running {len(env_names)} environments for {horizon} timesteps over {num_trials} trials...')
     start = time.time()

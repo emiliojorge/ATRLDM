@@ -11,6 +11,8 @@ from mean_agent import MeanAgent
 from q_agent import QAgent
 from speedyQ import Speedy_Qlearning
 from zapq_agent import ZapQAgent
+from util import EpsilonGreedy
+
 
 AGENT_TYPES = {'q': QAgent,
                'dynaq': DynaQAgent,
@@ -21,7 +23,7 @@ AGENT_TYPES = {'q': QAgent,
 
 
 class BaseAlgorithm(object):
-    def __init__(self, exploration=False, explorer=None, use_database=True, expert_steps=50, action_selection= "epsilon greedy"):
+    def __init__(self, exploration=False, explorer=None, use_database=True, expert_steps=100, action_selection= "epsilon greedy"):
         self.action_space = None
         self.use_database = use_database
         self.exploration = exploration
@@ -47,11 +49,12 @@ class BaseAlgorithm(object):
 
         for name, params in config['start_agents'].items():
             if self.action_selection == "epsilon greedy":
-                agent = AGENT_TYPES[name](**params, explorer=deepcopy(self.explorer), exploration=True)
+                explorer = EpsilonGreedy(**config['agent_explorer'])
+                agent = AGENT_TYPES[name](**params, explorer=deepcopy(explorer), exploration=True)
             else:
                 agent = AGENT_TYPES[name](**params)
             self.agents.append(agent)
-        np.random.seed(None)
+        np.random.seed(config['seed'])
         self.greediness = config['greediness']
 
     #Reset database
@@ -70,7 +73,7 @@ class BaseAlgorithm(object):
         #Save old agents if applicable
         if self.use_database == True  and self.num_states != None:
             if self.action_selection == "epsilon greedy":
-                idx = self.moving_average.argsort()[-2:][::-1]
+                idx = self.moving_average.argsort()[-1:][::-1]
                 for i in idx:
                     self.agent_database[(self.num_states, self.num_action)].append(deepcopy(self.agents[i]))
             else:
@@ -97,7 +100,7 @@ class BaseAlgorithm(object):
         #Get stored agents
         if (self.use_database == True and self.num_states != None and
         self.agent_database[(self.num_states, self.num_action)]!=[]):
-            for a in np.random.choice(self.agent_database[(self.num_states, self.num_action)], size=2):
+            for a in np.random.choice(self.agent_database[(self.num_states, self.num_action)], size=3):
                 self.agents.insert(0, a)
 
         for a in self.agents:
@@ -105,6 +108,14 @@ class BaseAlgorithm(object):
 
         if self.explorer:
             self.explorer.reset()
+
+        try:
+            pass
+            #print(self.expert_history)
+            #print(self.moving_average)
+
+        except AttributeError:
+            pass
 
         self.expert_history = np.zeros(len(self.agents))
         self.expert_counter = None
@@ -169,7 +180,7 @@ class BaseAlgorithm(object):
         if np.random.random() < self.explorer.get_eps():
             self.expert_id = np.random.randint(len(self.agents))
         else:
-            self.expert_id = np.argmax(self.moving_average)
+            self.expert_id = np.argmax(self.moving_average+np.random.normal(0,0.00001, size = len(self.agents)))
 
         self.expert_history[self.expert_id] +=1
         self.expert_counter = 0
