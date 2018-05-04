@@ -73,7 +73,7 @@ class BaseAlgorithm(object):
         #Save old agents if applicable
         if self.use_database == True  and self.num_states != None:
             if self.action_selection == "epsilon greedy":
-                idx = self.moving_average.argsort()[-2:][::-1]
+                idx = self.moving_average.argsort()[-1:][::-1]
                 for i in idx:
                     self.agent_database[(self.num_states, self.num_action)].append(deepcopy(self.agents[i]))
             else:
