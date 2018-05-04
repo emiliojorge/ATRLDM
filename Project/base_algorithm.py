@@ -110,8 +110,9 @@ class BaseAlgorithm(object):
             self.explorer.reset()
 
         try:
-            print(self.expert_history)
-            print(self.moving_average)
+            pass
+            #print(self.expert_history)
+            #print(self.moving_average)
 
         except AttributeError:
             pass
