@@ -10,9 +10,8 @@ from gym import spaces
 from mean_agent import MeanAgent
 from q_agent import QAgent
 from speedyQ import Speedy_Qlearning
-from zapq_agent import ZapQAgent
 from util import EpsilonGreedy
-
+from zapq_agent import ZapQAgent
 
 AGENT_TYPES = {'q': QAgent,
                'dynaq': DynaQAgent,
@@ -25,14 +24,20 @@ AGENT_TYPES = {'q': QAgent,
 class BaseAlgorithm(object):
     def __init__(self, exploration=False, explorer=None, use_database=True, expert_steps=100, action_selection= "epsilon greedy"):
         self.action_space = None
-        self.use_database = use_database
-        self.exploration = exploration
-        self.explorer = explorer
-        self.agent_database = defaultdict(list)
         self.num_action = None
         self.num_states = None
         self.expert_steps = expert_steps
         self.action_selection = action_selection
+
+        self.exploration = exploration
+        self.explorer = explorer
+
+        self.use_database = use_database
+        self.agent_database = defaultdict(list)
+
+        self.expert_history = None
+        self.expert_counter = None
+        self.moving_average = None
 
         self.agents = []
         self.greediness = None
@@ -54,24 +59,24 @@ class BaseAlgorithm(object):
             else:
                 agent = AGENT_TYPES[name](**params)
             self.agents.append(agent)
+
         np.random.seed(config['seed'])
         self.greediness = config['greediness']
 
-    #Reset database
     def meta_reset(self):
+        """
+        Hard reset of the algorithm including wiping the database.
+        :return: None
+        """
         self.__init__(self.exploration, self.explorer, self.use_database)
         self.explorer.reset()
 
-
     def reset(self):
         """
-        This should reset the algorithm so that it is ready for a new environment
+        Resets the algorithm so that it is ready for a new environment
         """
-        # for a in self.agents:
-        #     a.reset()
-
-        #Save old agents if applicable
-        if self.use_database == True  and self.num_states != None:
+        # Save old agents if applicable
+        if self.use_database and self.num_states is not None:
             if self.action_selection == "epsilon greedy":
                 idx = self.moving_average.argsort()[-1:][::-1]
                 for i in idx:
@@ -79,9 +84,9 @@ class BaseAlgorithm(object):
             else:
                 for a in self.agents:
                     self.agent_database[(self.num_states, self.num_action)].append(deepcopy(a))
+
         self.agents = []
         self._set_up()
-
 
     def initialize(self, num_states, num_action, discount):
         """
@@ -91,18 +96,20 @@ class BaseAlgorithm(object):
             num_action: int, the number of actions in the environment
             discount: double in [0, 1], the discount factor
         """
-
         self.action_space = spaces.Discrete(num_action)
 
         self.num_action = num_action
         self.num_states = num_states
 
-        #Get stored agents
-        if (self.use_database == True and self.num_states != None):
-            if len(self.agent_database[(self.num_states, self.num_action)])<3:
+        # Get stored agents
+        if self.use_database and self.num_states is not None:
+            if len(self.agent_database[(self.num_states, self.num_action)]) <= 3:
+                # We just pick the available three agents
                 selected_agents = self.agent_database[(self.num_states, self.num_action)]
             else:
+                # We randomly select three agents
                 selected_agents = np.random.choice(self.agent_database[(self.num_states, self.num_action)], size=3, replace=False)
+
             for a in selected_agents:
                 self.agents.insert(0, deepcopy(a))
 
@@ -112,25 +119,15 @@ class BaseAlgorithm(object):
         if self.explorer:
             self.explorer.reset()
 
-        try:
-            pass
-            #print(self.expert_history)
-            #print(self.moving_average)
-
-        except AttributeError:
-            pass
-
         self.expert_history = np.zeros(len(self.agents))
         self.expert_counter = None
         self.moving_average = np.zeros(len(self.agents))
-
 
     def observe_transition(self, state, action, next_state, reward):
         """
         Observe a new transition: state,action,next_state,reward
         This means at state and upon playing action you transition to
         next_state and obtains reward
-
         """
         if None in (state, action, next_state, reward):
             raise ValueError(state, action, next_state, reward)
@@ -148,7 +145,6 @@ class BaseAlgorithm(object):
         :param agents_actions: List of actions that the agents picked
         :return: action
         """
-
         actions = [a for a in range(self.action_space.n)]
 
         policy = np.zeros(len(actions))
@@ -161,21 +157,31 @@ class BaseAlgorithm(object):
         return np.random.choice(actions, p=policy)
 
     def _epsilon_greedy_experts(self, state):
+        """
+        Let the expert agent play the state when following the epsilon greedy strategy.
+        :param state: current state of the environment
+        :return: action that the expert picks
+        """
         if self.expert_counter is None or self.expert_counter > self.expert_steps:
             self._new_expert()
 
         self.expert_counter += 1
 
-        #"Run down" epsilon in each agent even if they are not used.
+        # "Run down" epsilon in each agent even if they are not used.
         for i, a in enumerate(self.agents):
             if i != self.expert_id:
                 try:
                     a.explorer.get_eps()
                 except AttributeError:
                     pass
+
         return self.agents[self.expert_id].play(state)
 
     def _new_expert(self):
+        """
+        Selects a new expert agent based on an epsilon-greedy strategy that plays for the next 100 steps.
+        :return: None
+        """
         if self.expert_counter is not None:
             self.moving_average[self.expert_id] = self.moving_average[self.expert_id]*0.9 + (1-0.9)*sum(self.expert_rewards)
         self.expert_rewards = []
@@ -185,7 +191,7 @@ class BaseAlgorithm(object):
         else:
             self.expert_id = np.argmax(self.moving_average+np.random.normal(0,0.00001, size = len(self.agents)))
 
-        self.expert_history[self.expert_id] +=1
+        self.expert_history[self.expert_id] += 1
         self.expert_counter = 0
 
     def play(self, state):
@@ -203,12 +209,11 @@ class BaseAlgorithm(object):
                 return np.random.randint(0, self.num_action)
             else:
                 actions = []
-
                 for agent in self.agents:
                     action = agent.play(state)
                     actions.append(action)
-
                 return self._majority_vote(actions)
+
         elif self.action_selection == "epsilon greedy":
             return self._epsilon_greedy_experts(state)
 
