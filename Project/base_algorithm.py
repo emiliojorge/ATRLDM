@@ -22,7 +22,7 @@ AGENT_TYPES = {'q': QAgent,
 
 
 class BaseAlgorithm(object):
-    def __init__(self, exploration=False, explorer=None, use_database=True, expert_steps=100, action_selection= "epsilon greedy"):
+    def __init__(self, exploration=True, explorer=EpsilonGreedy(start=1.0, end=0.05, steps=2000), use_database=True, expert_steps=100, action_selection="epsilon greedy"):
         self.action_space = None
         self.num_action = None
         self.num_states = None
