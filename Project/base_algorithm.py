@@ -22,7 +22,7 @@ AGENT_TYPES = {'q': QAgent,
 
 
 class BaseAlgorithm(object):
-    def __init__(self, exploration=True, explorer=EpsilonGreedy(start=1.0, end=0.05, steps=2000), use_database=True, expert_steps=100, action_selection="epsilon greedy"):
+    def __init__(self, exploration=True, explorer=EpsilonGreedy(start=1.0, end=0.05, steps=2000), use_database=True, expert_steps=100, action_selection="moving average"):
         self.action_space = None
         self.num_action = None
         self.num_states = None
@@ -53,7 +53,7 @@ class BaseAlgorithm(object):
             config = json.load(config_file)
 
         for name, params in config['start_agents'].items():
-            if self.action_selection == "epsilon greedy":
+            if self.action_selection == "moving average":
                 explorer = EpsilonGreedy(**config['agent_explorer'])
                 agent = AGENT_TYPES[name](**params, explorer=deepcopy(explorer), exploration=True)
             else:
@@ -77,7 +77,7 @@ class BaseAlgorithm(object):
         """
         # Save old agents if applicable
         if self.use_database and self.num_states is not None:
-            if self.action_selection == "epsilon greedy":
+            if self.action_selection == "moving average":
                 idx = self.moving_average.argsort()[-1:][::-1]
                 for i in idx:
                     self.agent_database[(self.num_states, self.num_action)].append(deepcopy(self.agents[i]))
@@ -135,7 +135,7 @@ class BaseAlgorithm(object):
         for a in self.agents:
             a.observe_transition(state, action, next_state, reward)
 
-        if self.action_selection == "epsilon greedy":
+        if self.action_selection == "moving average":
             self.expert_rewards.append(reward)
 
     def _majority_vote(self, agents_actions):
@@ -158,7 +158,7 @@ class BaseAlgorithm(object):
 
     def _epsilon_greedy_experts(self, state):
         """
-        Let the expert agent play the state when following the epsilon greedy strategy.
+        Let the expert agent play the state when following the moving average strategy.
         :param state: current state of the environment
         :return: action that the expert picks
         """
@@ -179,7 +179,7 @@ class BaseAlgorithm(object):
 
     def _new_expert(self):
         """
-        Selects a new expert agent based on an epsilon-greedy strategy that plays for the next 100 steps.
+        Selects a new expert agent based on an moving average strategy that plays for the next 100 steps.
         :return: None
         """
         if self.expert_counter is not None:
@@ -214,7 +214,7 @@ class BaseAlgorithm(object):
                     actions.append(action)
                 return self._majority_vote(actions)
 
-        elif self.action_selection == "epsilon greedy":
+        elif self.action_selection == "moving average":
             return self._epsilon_greedy_experts(state)
 
         else:

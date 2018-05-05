@@ -22,7 +22,7 @@ default_config = 'config.json'
 
 
 #algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=1.0, end=0.05, steps=10000),
-#                          use_database=False, action_selection = "epsilon greedy")
+#                          use_database=False, action_selection = "moving average")
 
 algorithm = BaseAlgorithm(exploration=True, explorer=EpsilonGreedy(start=1.0, end=0.05, steps=10000),
                           use_database=False, action_selection = "majority vote")
